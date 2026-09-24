@@ -1067,6 +1067,18 @@
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
+
+            let recentlyDismissed = false;
+            try {
+                const hiddenDate = parseInt(localStorage.getItem('tutorTracker_hideInstallDate') || '', 10);
+                recentlyDismissed =
+                    localStorage.getItem('tutorTracker_hideInstall') === '1' &&
+                    Number.isFinite(hiddenDate) &&
+                    (Date.now() - hiddenDate) <= 7 * 24 * 60 * 60 * 1000;
+            } catch (err) {}
+
+            if (recentlyDismissed) return;
+
             deferredPrompt = e;
             installBanner.classList.add('show');
         });
@@ -1134,15 +1146,27 @@
         function loadData() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    data = JSON.parse(saved);
+                if (!saved) return;
+
+                const parsed = JSON.parse(saved);
+                const validation = validateTrackerData(parsed);
+                if (!validation.valid) {
+                    console.error('Stored data is invalid:', validation.error);
+                    return;
+                }
+
+                data = {
+                    students: parsed.students,
+                    sessions: parsed.sessions,
+                    fees: Array.isArray(parsed.fees) ? parsed.fees : [],
+                    selectedStudentId: parsed.selectedStudentId || null
+                };
+
+                if (!data.students.some(s => s.id === data.selectedStudentId)) {
+                    data.selectedStudentId = null;
                 }
             } catch (e) {
                 console.error('Failed to load data', e);
-            }
-            // Migrate: ensure fees array exists
-            if (!Array.isArray(data.fees)) {
-                data.fees = [];
             }
         }
 
@@ -2173,19 +2197,41 @@ td { padding: 8px; border: 1px solid #ccc; }
             reader.onload = (event) => {
                 try {
                     const imported = JSON.parse(event.target.result);
-                    if (!imported.students || !imported.sessions) {
-                        throw new Error('Invalid file format');
+                    const validation = validateTrackerData(imported);
+                    if (!validation.valid) {
+                        throw new Error(validation.error);
                     }
+
                     openModal('Import Data', 'This will replace all current data. Are you sure?', () => {
-                        data = imported;
-                        if (!Array.isArray(data.fees)) {
-                            data.fees = [];
-                        }
-                        if (!data.selectedStudentId || !data.students.find(s => s.id === data.selectedStudentId)) {
+                        data = {
+                            students: imported.students.map(s => ({
+                                id: s.id,
+                                name: s.name.trim()
+                            })),
+                            sessions: imported.sessions.map(s => ({
+                                id: s.id,
+                                studentId: s.studentId,
+                                date: s.date,
+                                startTime: s.startTime,
+                                endTime: s.endTime,
+                                durationMinutes: s.durationMinutes
+                            })),
+                            fees: (imported.fees || []).map(f => ({
+                                id: f.id,
+                                studentId: f.studentId,
+                                date: f.date
+                            })),
+                            selectedStudentId: imported.selectedStudentId || null
+                        };
+
+                        if (!data.students.some(s => s.id === data.selectedStudentId)) {
                             data.selectedStudentId = null;
                         }
+
                         historyCycleFilter = 'all';
                         historyMonthFilter = 'all';
+                        editingSessionId = null;
+                        document.getElementById('saveBtn').textContent = '💾 Save Session';
                         saveData();
                         renderStudents();
                         populateStudentSelect();
@@ -2194,6 +2240,7 @@ td { padding: 8px; border: 1px solid #ccc; }
                         showToast('Data imported successfully');
                     });
                 } catch (err) {
+                    console.error('Failed to import data:', err);
                     showToast('Invalid backup file.', 'error');
                 }
             };
@@ -2202,6 +2249,133 @@ td { padding: 8px; border: 1px solid #ccc; }
         }
 
         // ===================== UTILS =====================
+        function isValidDateString(value) {
+            if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+            const [year, month, day] = value.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.getFullYear() === year &&
+                   date.getMonth() === month - 1 &&
+                   date.getDate() === day;
+        }
+
+        function isValidTimeString(value) {
+            if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) return false;
+            const [hours, minutes] = value.split(':').map(Number);
+            return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+        }
+
+        function validateTrackerData(candidate) {
+            if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+                return { valid: false, error: 'Backup must contain an object.' };
+            }
+            if (!Array.isArray(candidate.students) || !Array.isArray(candidate.sessions)) {
+                return { valid: false, error: 'Students and sessions must be arrays.' };
+            }
+            if (candidate.students.length > MAX_STUDENTS) {
+                return { valid: false, error: 'Backup contains more than 10 students.' };
+            }
+
+            const fees = candidate.fees === undefined ? [] : candidate.fees;
+            if (!Array.isArray(fees)) {
+                return { valid: false, error: 'Fees must be an array.' };
+            }
+
+            const studentIds = new Set();
+            const studentNames = new Set();
+
+            for (const student of candidate.students) {
+                if (!student || typeof student !== 'object' ||
+                    typeof student.id !== 'string' || !student.id.trim() ||
+                    typeof student.name !== 'string' || !student.name.trim()) {
+                    return { valid: false, error: 'Backup contains an invalid student.' };
+                }
+
+                const normalizedName = student.name.trim().toLowerCase();
+                if (studentIds.has(student.id)) {
+                    return { valid: false, error: 'Backup contains duplicate student IDs.' };
+                }
+                if (studentNames.has(normalizedName)) {
+                    return { valid: false, error: 'Backup contains duplicate student names.' };
+                }
+
+                studentIds.add(student.id);
+                studentNames.add(normalizedName);
+            }
+
+            const sessionIds = new Set();
+            for (const session of candidate.sessions) {
+                if (!session || typeof session !== 'object' ||
+                    typeof session.id !== 'string' || !session.id.trim() ||
+                    typeof session.studentId !== 'string' ||
+                    !studentIds.has(session.studentId) ||
+                    !isValidDateString(session.date) ||
+                    !isValidTimeString(session.startTime) ||
+                    !isValidTimeString(session.endTime) ||
+                    !Number.isInteger(session.durationMinutes) ||
+                    session.durationMinutes <= 0 ||
+                    session.durationMinutes > MAX_SESSION_MINUTES) {
+                    return { valid: false, error: 'Backup contains an invalid session.' };
+                }
+
+                if (sessionIds.has(session.id)) {
+                    return { valid: false, error: 'Backup contains duplicate session IDs.' };
+                }
+
+                const start = parseTime(session.startTime);
+                const end = parseTime(session.endTime);
+                const startTotal = start.hours * 60 + start.minutes;
+                const endTotal = end.hours * 60 + end.minutes;
+
+                if (endTotal <= startTotal ||
+                    endTotal - startTotal !== session.durationMinutes) {
+                    return { valid: false, error: 'Backup contains an inconsistent session duration.' };
+                }
+
+                sessionIds.add(session.id);
+            }
+
+            const feeIds = new Set();
+            for (const fee of fees) {
+                if (!fee || typeof fee !== 'object' ||
+                    typeof fee.id !== 'string' || !fee.id.trim() ||
+                    typeof fee.studentId !== 'string' ||
+                    !studentIds.has(fee.studentId) ||
+                    !isValidDateString(fee.date)) {
+                    return { valid: false, error: 'Backup contains an invalid fee record.' };
+                }
+
+                if (feeIds.has(fee.id)) {
+                    return { valid: false, error: 'Backup contains duplicate fee IDs.' };
+                }
+                feeIds.add(fee.id);
+            }
+
+            for (let i = 0; i < fees.length; i++) {
+                for (let j = i + 1; j < fees.length; j++) {
+                    if (fees[i].studentId === fees[j].studentId &&
+                        fees[i].date === fees[j].date) {
+                        return { valid: false, error: 'Backup contains duplicate fee dates for a student.' };
+                    }
+                }
+            }
+
+            if (candidate.selectedStudentId !== null &&
+                candidate.selectedStudentId !== undefined &&
+                (typeof candidate.selectedStudentId !== 'string' ||
+                 !studentIds.has(candidate.selectedStudentId))) {
+                return { valid: false, error: 'Backup contains an invalid selected student.' };
+            }
+
+            return { valid: true };
+        }
+
+        function makeId(prefix) {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return prefix + crypto.randomUUID();
+            }
+            return prefix + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+        }
+
         function parseTime(timeStr) {
             const [h, m] = timeStr.split(':').map(Number);
             return { hours: h, minutes: m };
