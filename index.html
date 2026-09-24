@@ -809,7 +809,6 @@
         html.dark .add-student-btn:hover, html.dark .add-student-btn:active {
             background: #2a241b;
         }
-
         html.dark .toast {
             background: #2d333e;
             color: var(--text);
@@ -1009,7 +1008,8 @@
     <section class="card">
         <div class="card-title">💾 Data Backup</div>
         <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px;">Use these buttons to move your data to another device or browser.</p>
-        <div class="data-actions">            <button class="btn btn-secondary" id="exportBtn">📤 Export Backup (JSON)</button>
+        <div class="data-actions">
+            <button class="btn btn-secondary" id="exportBtn">📤 Export Backup (JSON)</button>
             <button class="btn btn-secondary" id="importBtn">📥 Import Backup (JSON)</button>
             <input type="file" id="importFile" accept=".json">
         </div>
@@ -1150,6 +1150,7 @@
 
                 const parsed = JSON.parse(saved);
                 const validation = validateTrackerData(parsed);
+
                 if (!validation.valid) {
                     console.error('Stored data is invalid:', validation.error);
                     return;
@@ -1662,7 +1663,6 @@
         function deleteFeeDate(feeId) {
             const fee = data.fees.find(f => f.id === feeId);
             if (!fee) return;
-
             openModal(
                 'Delete Fee Date',
                 `Remove fee received on ${formatDateFriendly(fee.date)}? Sessions stay — only the cycle boundary is removed.`,
@@ -2250,6 +2250,7 @@
         // ===================== MONTHLY EXCEL EXPORT =====================
         function exportMonthlyExcel() {
             const monthVal = document.getElementById('summaryMonth').value;
+
             if (!monthVal) {
                 showToast('Please select a month first.', 'error');
                 return;
@@ -2260,6 +2261,7 @@
                 .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             const rows = [];
+
             data.students.forEach(student => {
                 const studentSessions = data.sessions.filter(s => {
                     const d = new Date(s.date + 'T00:00:00');
@@ -2269,6 +2271,7 @@
                 });
 
                 const totalMinutes = studentSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+
                 rows.push({
                     name: student.name,
                     sessions: studentSessions.length,
@@ -2309,6 +2312,7 @@
                 cells: ['Grand Total', grandTotalSessions, grandTotalTime, grandTotalHours],
                 style: '2'
             });
+
             exportRows.push({
                 cells: ['Exported from Tutoring Time Tracker on ' + new Date().toLocaleDateString()]
             });
@@ -2320,6 +2324,7 @@
                     exportRows,
                     [28, 12, 18, 22]
                 );
+
                 showToast('Native Excel (.xlsx) report downloaded!');
             } catch (err) {
                 console.error('Failed to export XLSX:', err);
@@ -2373,6 +2378,7 @@
             ];
 
             let totalMinutes = 0;
+
             sessions.forEach(session => {
                 exportRows.push({
                     cells: [
@@ -2382,6 +2388,7 @@
                         formatDuration(session.durationMinutes)
                     ]
                 });
+
                 totalMinutes += session.durationMinutes;
             });
 
@@ -2389,6 +2396,7 @@
                 cells: ['Total', '', '', formatDuration(totalMinutes)],
                 style: '2'
             });
+
             exportRows.push({
                 cells: ['Exported from Tutoring Time Tracker on ' + new Date().toLocaleDateString()]
             });
@@ -2403,6 +2411,7 @@
                     exportRows,
                     [22, 18, 18, 18]
                 );
+
                 showToast('Native Excel (.xlsx) report downloaded!');
             } catch (err) {
                 console.error('Failed to export XLSX:', err);
@@ -2501,10 +2510,12 @@
             if (!file) return;
 
             const reader = new FileReader();
+
             reader.onload = (event) => {
                 try {
                     const imported = JSON.parse(event.target.result);
                     const validation = validateTrackerData(imported);
+
                     if (!validation.valid) {
                         throw new Error(validation.error);
                     }
@@ -2539,11 +2550,13 @@
                         historyMonthFilter = 'all';
                         editingSessionId = null;
                         document.getElementById('saveBtn').textContent = '💾 Save Session';
+
                         saveData();
                         renderStudents();
                         populateStudentSelect();
                         renderSummary();
                         renderHistory();
+
                         showToast('Data imported successfully');
                     });
                 } catch (err) {
@@ -2551,6 +2564,7 @@
                     showToast('Invalid backup file.', 'error');
                 }
             };
+
             reader.readAsText(file);
             e.target.value = '';
         }
@@ -2575,9 +2589,11 @@
             if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
                 return { valid: false, error: 'Backup must contain an object.' };
             }
+
             if (!Array.isArray(candidate.students) || !Array.isArray(candidate.sessions)) {
                 return { valid: false, error: 'Students and sessions must be arrays.' };
             }
+
             if (candidate.students.length > MAX_STUDENTS) {
                 return { valid: false, error: 'Backup contains more than 10 students.' };
             }
@@ -2598,9 +2614,11 @@
                 }
 
                 const normalizedName = student.name.trim().toLowerCase();
+
                 if (studentIds.has(student.id)) {
                     return { valid: false, error: 'Backup contains duplicate student IDs.' };
                 }
+
                 if (studentNames.has(normalizedName)) {
                     return { valid: false, error: 'Backup contains duplicate student names.' };
                 }
@@ -2610,6 +2628,7 @@
             }
 
             const sessionIds = new Set();
+
             for (const session of candidate.sessions) {
                 if (!session || typeof session !== 'object' ||
                     typeof session.id !== 'string' || !session.id.trim() ||
@@ -2642,6 +2661,7 @@
             }
 
             const feeIds = new Set();
+
             for (const fee of fees) {
                 if (!fee || typeof fee !== 'object' ||
                     typeof fee.id !== 'string' || !fee.id.trim() ||
@@ -2654,6 +2674,7 @@
                 if (feeIds.has(fee.id)) {
                     return { valid: false, error: 'Backup contains duplicate fee IDs.' };
                 }
+
                 feeIds.add(fee.id);
             }
 
@@ -2680,6 +2701,7 @@
             if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
                 return prefix + crypto.randomUUID();
             }
+
             return prefix + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
         }
 
@@ -2769,6 +2791,7 @@
             if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') {
                 modalPreviousFocus.focus();
             }
+
             modalPreviousFocus = null;
         }
 
