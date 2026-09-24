@@ -1555,7 +1555,7 @@
 
         function sanitizeSheetName(name) {
             return String(name || 'Sheet1')
-                .replace(/[\\\\\\/\\?\\*\\[\\]:]/g, '')
+                .replace(/[\\\\\\/:*?\[\]]/g, '')
                 .slice(0, 31) || 'Sheet1';
         }
 
