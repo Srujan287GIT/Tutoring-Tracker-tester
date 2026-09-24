@@ -511,7 +511,9 @@
             opacity: 0;
             transition: all 0.3s ease;
             z-index: 1000;
-            white-space: nowrap;
+            white-space: normal;
+            text-align: center;
+            width: max-content;
             max-width: 90vw;
         }
 
@@ -952,6 +954,7 @@
         let editingSessionId = null;
         let modalCallback = null;
         let modalPreviousFocus = null;
+        let toastTimer = null;
         let historyMonthFilter = 'all';
 
         // ===================== INIT =====================
@@ -1042,7 +1045,7 @@
                     return;
                 }
                 const student = {
-                    id: 's_' + Date.now(),
+                    id: makeId('s_'),
                     name: trimmed
                 };
                 data.students.push(student);
@@ -1270,7 +1273,7 @@
             }
 
             const session = {
-                id: editingSessionId || 'sess_' + Date.now(),
+                id: editingSessionId || makeId('sess_'),
                 studentId,
                 date,
                 startTime,
@@ -1843,6 +1846,13 @@ td { padding: 8px; border: 1px solid #ccc; }
             return { valid: true };
         }
 
+        function makeId(prefix) {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return prefix + crypto.randomUUID();
+            }
+            return prefix + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+        }
+
         function formatDuration(minutes) {
             const h = Math.floor(minutes / 60);
             const m = Math.round(minutes % 60);
@@ -1887,8 +1897,11 @@ td { padding: 8px; border: 1px solid #ccc; }
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show ' + type;
-            setTimeout(() => {
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
                 toast.classList.remove('show');
+                toastTimer = null;
             }, 3000);
         }
 
