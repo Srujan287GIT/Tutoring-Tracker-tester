@@ -378,6 +378,11 @@
             width: auto;
         }
 
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
         .btn-group {
             display: flex;
             gap: 10px;
@@ -629,6 +634,145 @@
             color: var(--accent);
         }
 
+        /* Fee-cycle history */
+        .history-view-selector {
+            margin-bottom: 16px;
+        }
+
+        .history-view-selector select {
+            max-width: 260px;
+        }
+
+        .fee-management {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            background: var(--bg);
+        }
+
+        .fee-management-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .fee-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 12px;
+        }
+
+        .fee-input-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .fee-input-row .btn {
+            flex: 0 0 auto;
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .fee-payment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .fee-payment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+        }
+
+        .fee-payment-date {
+            font-weight: 600;
+        }
+
+        .fee-payment-note {
+            color: var(--text-light);
+            font-size: 0.82rem;
+            margin-top: 2px;
+        }
+
+        .fee-cycle-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            background: var(--card);
+        }
+
+        .fee-cycle-card.current {
+            border-color: var(--accent);
+        }
+
+        .fee-cycle-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .fee-cycle-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .fee-cycle-meta {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
+
+        .fee-cycle-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            font-weight: 700;
+        }
+
+        .fee-cycle-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            vertical-align: middle;
+        }
+
+        .before-fee-card {
+            border-style: dashed;
+        }
+
+        @media (max-width: 600px) {
+            .fee-input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .fee-input-row .btn {
+                width: 100%;
+            }
+
+            .fee-cycle-header {
+                flex-direction: column;
+            }
+        }
+
         /* Error */
         .error-msg {
             color: var(--danger);
@@ -821,19 +965,47 @@
     <!-- Session History -->
     <section class="card">
         <div class="card-title" id="historyTitle">📋 Session History</div>
+
+        <div id="historyViewWrap" class="history-view-selector" style="display: none;">
+            <label for="historyViewSelect">View sessions by</label>
+            <select id="historyViewSelect">
+                <option value="fee">💰 Fee Cycles</option>
+                <option value="month">📅 Calendar Months</option>
+            </select>
+        </div>
+
+        <div id="feeManagementWrap" style="display: none; margin-bottom: 16px;">
+            <div class="fee-management">
+                <div class="fee-management-title">💰 Tuition Fee Tracking</div>
+                <div class="fee-input-row">
+                    <div class="form-group">
+                        <label for="feeReceivedDate">Fee received on</label>
+                        <input type="date" id="feeReceivedDate">
+                        <div class="error-msg" id="feeDateError"></div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="recordFeeBtn">➕ Record Fee Received</button>
+                </div>
+                <div id="feePaymentList" class="fee-payment-list"></div>
+            </div>
+        </div>
+
         <div id="historyMonthWrap" style="display: none; margin-bottom: 16px;">
             <label for="historyMonthSelect">Show sessions for</label>
             <select id="historyMonthSelect"></select>
         </div>
+
         <div id="historyContainer">
             <div class="empty-state">
                 <p>Select a student to view their session history.</p>
             </div>
         </div>
+
         <div style="margin-top: 16px; display: none;" id="clearAllContainer">
             <div class="btn-group">
-                <button class="btn btn-secondary" id="exportStudentExcelBtn">📊 Export All (Excel)</button>
-                <button class="btn btn-secondary" id="exportMonthlyStudentBtn">📅 Export This Month (Excel)</button>
+                <button class="btn btn-secondary" id="exportFeeCycleExcelBtn">💰 Export Current Fee Cycle</button>
+                <button class="btn btn-secondary" id="exportAllFeeCyclesBtn">📚 Export All Fee Cycles</button>
+                <button class="btn btn-secondary" id="exportStudentExcelBtn">📊 Export All Sessions</button>
+                <button class="btn btn-secondary" id="exportMonthlyStudentBtn">📅 Export Selected Month</button>
                 <button class="btn btn-danger" id="clearAllBtn">🗑️ Clear All Sessions</button>
             </div>
         </div>
@@ -956,6 +1128,7 @@
         let data = {
             students: [],
             sessions: [],
+            feePayments: [],
             selectedStudentId: null
         };
 
@@ -964,6 +1137,7 @@
         let modalPreviousFocus = null;
         let toastTimer = null;
         let historyMonthFilter = 'all';
+        let historyViewMode = 'fee';
 
         // ===================== INIT =====================
         function init() {
@@ -973,6 +1147,7 @@
             populateStudentSelect();
             setDefaultDate();
             setDefaultMonth();
+            setDefaultFeeDate();
             renderSummary();
             renderHistory();
             setupEventListeners();
@@ -990,7 +1165,12 @@
                     return;
                 }
 
-                data = parsed;
+                data = {
+                    students: parsed.students,
+                    sessions: parsed.sessions,
+                    feePayments: Array.isArray(parsed.feePayments) ? parsed.feePayments : [],
+                    selectedStudentId: parsed.selectedStudentId || null
+                };
                 if (!data.students.some(s => s.id === data.selectedStudentId)) {
                     data.selectedStudentId = null;
                 }
@@ -1087,6 +1267,7 @@
         function selectStudent(id) {
             data.selectedStudentId = id;
             historyMonthFilter = 'all';
+            historyViewMode = 'fee';
             saveData();
             renderStudents();
             populateStudentSelect();
@@ -1170,6 +1351,10 @@
             document.getElementById('summaryMonth').value = formatMonthForInput(new Date());
         }
 
+        function setDefaultFeeDate() {
+            document.getElementById('feeReceivedDate').value = formatDateForInput(new Date());
+        }
+
         function setupEventListeners() {
             document.getElementById('themeToggle').addEventListener('click', () => {
                 applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
@@ -1191,6 +1376,13 @@
             document.getElementById('exportExcelBtn').addEventListener('click', exportMonthlyExcel);
             document.getElementById('exportStudentExcelBtn').addEventListener('click', () => exportStudentExcel(null));
             document.getElementById('exportMonthlyStudentBtn').addEventListener('click', exportStudentExcelMonthly);
+            document.getElementById('exportFeeCycleExcelBtn').addEventListener('click', exportCurrentFeeCycleExcel);
+            document.getElementById('exportAllFeeCyclesBtn').addEventListener('click', exportAllFeeCyclesExcel);
+            document.getElementById('recordFeeBtn').addEventListener('click', recordFeePayment);
+            document.getElementById('historyViewSelect').addEventListener('change', (e) => {
+                historyViewMode = e.target.value === 'month' ? 'month' : 'fee';
+                renderHistory();
+            });
             document.getElementById('historyMonthSelect').addEventListener('change', (e) => {
                 historyMonthFilter = e.target.value;
                 renderHistory();
@@ -1364,16 +1556,21 @@
             const title = document.getElementById('historyTitle');
             const clearContainer = document.getElementById('clearAllContainer');
             const monthWrap = document.getElementById('historyMonthWrap');
+            const viewWrap = document.getElementById('historyViewWrap');
+            const feeWrap = document.getElementById('feeManagementWrap');
+            const viewSelect = document.getElementById('historyViewSelect');
 
             if (!data.selectedStudentId) {
                 title.textContent = '📋 Session History';
+                viewWrap.style.display = 'none';
+                feeWrap.style.display = 'none';
                 monthWrap.style.display = 'none';
+                clearContainer.style.display = 'none';
                 container.innerHTML = `
                     <div class="empty-state">
                         <p>Select a student to view their session history.</p>
                     </div>
                 `;
-                clearContainer.style.display = 'none';
                 return;
             }
 
@@ -1385,10 +1582,20 @@
             }
 
             title.textContent = `📋 ${escapeHtml(student.name)}'s Sessions`;
+            viewWrap.style.display = 'block';
+            feeWrap.style.display = 'block';
+            clearContainer.style.display = 'block';
+            viewSelect.value = historyViewMode;
+            populateFeePaymentList();
 
-            const sessions = data.sessions
-                .filter(s => s.studentId === data.selectedStudentId)
-                .sort((a, b) => new Date(b.date + 'T' + b.startTime) - new Date(a.date + 'T' + a.startTime));
+            if (historyViewMode === 'fee') {
+                monthWrap.style.display = 'none';
+                renderFeeCycleHistory(student, container);
+                return;
+            }
+
+            monthWrap.style.display = 'block';
+            const sessions = getStudentSessionsSorted(student.id, true);
 
             if (sessions.length === 0) {
                 monthWrap.style.display = 'none';
@@ -1397,12 +1604,9 @@
                         <p>No sessions recorded yet.</p>
                     </div>
                 `;
-                clearContainer.style.display = 'none';
                 return;
             }
 
-            clearContainer.style.display = 'block';
-            monthWrap.style.display = 'block';
             populateHistoryMonthFilter(sessions);
 
             const displaySessions = historyMonthFilter === 'all'
@@ -1420,6 +1624,45 @@
                 return;
             }
 
+            container.innerHTML = '';
+            container.appendChild(buildSessionTable(displaySessions));
+        }
+
+        function getStudentSessionsSorted(studentId, newestFirst = true) {
+            return data.sessions
+                .filter(s => s.studentId === studentId)
+                .sort((a, b) => {
+                    const dateCompare = a.date.localeCompare(b.date);
+                    if (dateCompare !== 0) return newestFirst ? -dateCompare : dateCompare;
+                    const timeCompare = a.startTime.localeCompare(b.startTime);
+                    return newestFirst ? -timeCompare : timeCompare;
+                });
+        }
+
+        function populateHistoryMonthFilter(sessions) {
+            const sel = document.getElementById('historyMonthSelect');
+            const months = [...new Set(sessions.map(s => s.date.slice(0, 7)))].sort().reverse();
+            sel.innerHTML = '';
+            const allOpt = document.createElement('option');
+            allOpt.value = 'all';
+            allOpt.textContent = 'All months';
+            sel.appendChild(allOpt);
+            months.forEach(m => {
+                const [y, mo] = m.split('-').map(Number);
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                sel.appendChild(opt);
+            });
+            if (historyMonthFilter !== 'all' && months.includes(historyMonthFilter)) {
+                sel.value = historyMonthFilter;
+            } else {
+                sel.value = 'all';
+                historyMonthFilter = 'all';
+            }
+        }
+
+        function buildSessionTable(displaySessions) {
             const table = document.createElement('table');
             table.className = 'history-table';
             table.innerHTML = `
@@ -1453,49 +1696,274 @@
                 tbody.appendChild(tr);
             });
 
-            container.innerHTML = '';
             const tableWrap = document.createElement('div');
             tableWrap.className = 'history-table-wrap';
             tableWrap.appendChild(table);
-            container.appendChild(tableWrap);
 
-            container.querySelectorAll('.edit-btn').forEach(btn => {
+            tableWrap.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editSession(btn.dataset.id));
             });
-            container.querySelectorAll('.delete-btn').forEach(btn => {
+            tableWrap.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => confirmDeleteSession(btn.dataset.id));
             });
+
+            return tableWrap;
         }
 
-        function populateHistoryMonthFilter(sessions) {
-            const sel = document.getElementById('historyMonthSelect');
-            const months = [...new Set(sessions.map(s => s.date.slice(0, 7)))].sort().reverse();
-            sel.innerHTML = '';
-            const allOpt = document.createElement('option');
-            allOpt.value = 'all';
-            allOpt.textContent = 'All months';
-            sel.appendChild(allOpt);
-            months.forEach(m => {
-                const [y, mo] = m.split('-').map(Number);
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.textContent = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                sel.appendChild(opt);
+        function getFeeCyclesForStudent(studentId) {
+            const payments = data.feePayments
+                .filter(p => p.studentId === studentId)
+                .sort((a, b) => a.date.localeCompare(b.date));
+
+            return payments.map((payment, index) => {
+                const nextPayment = payments[index + 1] || null;
+                const endDate = nextPayment ? addDaysToDateString(nextPayment.date, -1) : null;
+                const startDay = dateStringToDayNumber(payment.date);
+                const endDay = endDate ? dateStringToDayNumber(endDate) : Number.POSITIVE_INFINITY;
+
+                const sessions = data.sessions
+                    .filter(s => {
+                        if (s.studentId !== studentId) return false;
+                        const day = dateStringToDayNumber(s.date);
+                        return day >= startDay && day <= endDay;
+                    })
+                    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+
+                return {
+                    paymentId: payment.id,
+                    startDate: payment.date,
+                    endDate,
+                    nextPaymentDate: nextPayment ? nextPayment.date : null,
+                    sessions,
+                    totalMinutes: sessions.reduce((sum, s) => sum + s.durationMinutes, 0)
+                };
+            }).sort((a, b) => b.startDate.localeCompare(a.startDate));
+        }
+
+        function renderFeeCycleHistory(student, container) {
+            const cycles = getFeeCyclesForStudent(student.id);
+            container.innerHTML = '';
+
+            if (cycles.length === 0) {
+                const studentSessions = getStudentSessionsSorted(student.id, false);
+                const message = document.createElement('div');
+                message.className = 'empty-state';
+                message.innerHTML = `
+                    <p>No fee received date has been recorded yet.</p>
+                    <p style="margin-top: 6px;">Record the first payment date above to start fee-cycle tracking.</p>
+                `;
+                container.appendChild(message);
+
+                if (studentSessions.length > 0) {
+                    const beforeCard = document.createElement('div');
+                    beforeCard.className = 'fee-cycle-card before-fee-card';
+                    beforeCard.innerHTML = `
+                        <div class="fee-cycle-title">Sessions Before First Fee</div>
+                        <div class="fee-cycle-meta">These sessions predate the first recorded fee and are kept separately.</div>
+                    `;
+                    beforeCard.appendChild(buildSessionTable(studentSessions));
+                    container.appendChild(beforeCard);
+                }
+                return;
+            }
+
+            const firstStartDate = cycles[cycles.length - 1].startDate;
+            const beforeFirstDay = dateStringToDayNumber(firstStartDate);
+            const beforeFirstSessions = data.sessions
+                .filter(s =>
+                    s.studentId === student.id &&
+                    dateStringToDayNumber(s.date) < beforeFirstDay
+                )
+                .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+
+            cycles.forEach((cycle, index) => {
+                const card = document.createElement('div');
+                card.className = 'fee-cycle-card' + (index === 0 ? ' current' : '');
+
+                const title = cycle.endDate
+                    ? `Fee Cycle: ${formatDateFriendly(cycle.startDate)} – ${formatDateFriendly(cycle.endDate)}`
+                    : `Fee Cycle: ${formatDateFriendly(cycle.startDate)} – Until Next Fee Received`;
+
+                const nextLabel = cycle.nextPaymentDate
+                    ? formatDateFriendly(cycle.nextPaymentDate)
+                    : 'Not yet recorded';
+
+                card.innerHTML = `
+                    <div class="fee-cycle-header">
+                        <div>
+                            <div class="fee-cycle-title">
+                                ${title}
+                                ${index === 0 ? '<span class="fee-cycle-badge">Current</span>' : ''}
+                            </div>
+                            <div class="fee-cycle-meta">
+                                Fee received: ${formatDateFriendly(cycle.startDate)} · Next fee: ${nextLabel}
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small cycle-export-btn" data-id="${escapeHtml(cycle.paymentId)}">
+                            📊 Export Cycle
+                        </button>
+                    </div>
+                `;
+
+                if (cycle.sessions.length > 0) {
+                    card.appendChild(buildSessionTable(cycle.sessions));
+                } else {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-state';
+                    empty.innerHTML = '<p>No sessions recorded in this fee cycle.</p>';
+                    card.appendChild(empty);
+                }
+
+                const total = document.createElement('div');
+                total.className = 'fee-cycle-total';
+                total.innerHTML = `
+                    <span>${cycle.sessions.length} session${cycle.sessions.length !== 1 ? 's' : ''}</span>
+                    <span>Total: ${formatDuration(cycle.totalMinutes)}</span>
+                `;
+                card.appendChild(total);
+
+                const exportBtn = card.querySelector('.cycle-export-btn');
+                if (exportBtn && cycle.sessions.length > 0) {
+                    exportBtn.addEventListener('click', () => exportStudentFeeCycleExcel(cycle.paymentId));
+                } else if (exportBtn) {
+                    exportBtn.remove();
+                }
+
+                container.appendChild(card);
             });
-            if (historyMonthFilter !== 'all' && months.includes(historyMonthFilter)) {
-                sel.value = historyMonthFilter;
-            } else {
-                sel.value = 'all';
-                historyMonthFilter = 'all';
+
+            if (beforeFirstSessions.length > 0) {
+                const beforeCard = document.createElement('div');
+                beforeCard.className = 'fee-cycle-card before-fee-card';
+                beforeCard.innerHTML = `
+                    <div class="fee-cycle-title">Sessions Before First Fee</div>
+                    <div class="fee-cycle-meta">These sessions predate the first recorded fee and are kept separately.</div>
+                `;
+                beforeCard.appendChild(buildSessionTable(beforeFirstSessions));
+                container.appendChild(beforeCard);
             }
         }
 
-        function editSession(sessionId) {
+        function populateFeePaymentList() {
+            const list = document.getElementById('feePaymentList');
+            const payments = data.feePayments
+                .filter(p => p.studentId === data.selectedStudentId)
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            list.innerHTML = '';
+
+            if (payments.length === 0) {
+                list.innerHTML = '<div class="fee-payment-note">No fee dates recorded yet. The first recorded date will start the first fee cycle.</div>';
+                return;
+            }
+
+            const heading = document.createElement('div');
+            heading.className = 'fee-payment-note';
+            heading.textContent = 'Recorded fee receipts (newest first):';
+            list.appendChild(heading);
+
+            payments.forEach(payment => {
+                const item = document.createElement('div');
+                item.className = 'fee-payment-item';
+                item.innerHTML = `
+                    <div>
+                        <div class="fee-payment-date">${formatDateFriendly(payment.date)}</div>
+                        <div class="fee-payment-note">Received fee — this date starts a new cycle</div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-small delete-fee-btn" data-id="${escapeHtml(payment.id)}">Delete</button>
+                `;
+                item.querySelector('.delete-fee-btn').addEventListener('click', () => confirmDeleteFeePayment(payment.id));
+                list.appendChild(item);
+            });
+        }
+
+        function recordFeePayment() {
+            if (!data.selectedStudentId) {
+                showToast('Please select a student first.', 'error');
+                return;
+            }
+
+            const input = document.getElementById('feeReceivedDate');
+            const error = document.getElementById('feeDateError');
+            const date = input.value;
+            error.textContent = '';
+            input.classList.remove('input-error');
+
+            if (!isValidDateString(date)) {
+                error.textContent = 'Please choose a valid fee received date.';
+                input.classList.add('input-error');
+                return;
+            }
+
+            const today = formatDateForInput(new Date());
+            if (date > today) {
+                error.textContent = 'A fee received date cannot be in the future.';
+                input.classList.add('input-error');
+                return;
+            }
+
+            const duplicate = data.feePayments.some(
+                p => p.studentId === data.selectedStudentId && p.date === date
+            );
+            if (duplicate) {
+                error.textContent = 'A fee received record already exists for this date.';
+                input.classList.add('input-error');
+                return;
+            }
+
+            data.feePayments.push({
+                id: makeId('fee_'),
+                studentId: data.selectedStudentId,
+                date
+            });
+
+            saveData();
+            renderHistory();
+            input.value = formatDateForInput(new Date());
+            showToast(`Fee received on ${formatDateFriendly(date)} — new fee cycle recorded`);
+        }
+
+        function confirmDeleteFeePayment(paymentId) {
+            const payment = data.feePayments.find(p => p.id === paymentId);
+            if (!payment) return;
+
+            openModal(
+                'Delete Fee Record',
+                `Delete the fee received record for ${formatDateFriendly(payment.date)}? Sessions will stay safe, but fee-cycle boundaries will be recalculated.`,
+                () => {
+                    data.feePayments = data.feePayments.filter(p => p.id !== paymentId);
+                    saveData();
+                    renderHistory();
+                    showToast('Fee record deleted; fee cycles recalculated');
+                }
+            );
+        }
+
+        function dateStringToDayNumber(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+        }
+
+        function addDaysToDateString(dateStr, days) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day));
+            date.setUTCDate(date.getUTCDate() + days);
+            return formatDateForInputUTC(date);
+        }
+
+        function formatDateForInputUTC(date) {
+            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+        }
+
+                function editSession(sessionId) {
             const session = data.sessions.find(s => s.id === sessionId);
             if (!session) return;
 
             editingSessionId = sessionId;
+            data.selectedStudentId = session.studentId;
+            historyMonthFilter = 'all';
             document.getElementById('studentSelect').value = session.studentId;
+            renderStudents();
             document.getElementById('sessionDate').value = session.date;
             setTimeValue(session.startTime, 'startHour', 'startMinute', 'startAmPm');
             setTimeValue(session.endTime, 'endHour', 'endMinute', 'endAmPm');
@@ -2006,6 +2474,209 @@
             exportStudentExcel(monthVal);
         }
 
+        function exportStudentFeeCycleExcel(paymentId) {
+            if (!data.selectedStudentId) {
+                showToast('Please select a student first.', 'error');
+                return;
+            }
+
+            const student = data.students.find(s => s.id === data.selectedStudentId);
+            const cycle = getFeeCyclesForStudent(data.selectedStudentId).find(c => c.paymentId === paymentId);
+
+            if (!student || !cycle) {
+                showToast('Fee cycle not found.', 'error');
+                return;
+            }
+
+            if (cycle.sessions.length === 0) {
+                showToast('No sessions to export for this fee cycle.', 'error');
+                return;
+            }
+
+            const cycleEndLabel = cycle.endDate
+                ? formatDateFriendly(cycle.endDate)
+                : 'Until next fee is received';
+
+            const exportRows = [
+                { cells: [`${student.name} — Fee Cycle Report`], style: '2' },
+                { cells: [`Fee received: ${formatDateFriendly(cycle.startDate)}`] },
+                { cells: [`Cycle period: ${formatDateFriendly(cycle.startDate)} – ${cycleEndLabel}`] },
+                { cells: [`Next fee received: ${cycle.nextPaymentDate ? formatDateFriendly(cycle.nextPaymentDate) : 'Not yet recorded'}`] },
+                { cells: [] },
+                { cells: ['Date', 'Start Time', 'End Time', 'Duration'], style: '1' }
+            ];
+
+            cycle.sessions.forEach(session => {
+                exportRows.push({
+                    cells: [
+                        formatDateFriendly(session.date),
+                        formatTimeFriendly(session.startTime),
+                        formatTimeFriendly(session.endTime),
+                        formatDuration(session.durationMinutes)
+                    ]
+                });
+            });
+
+            exportRows.push({
+                cells: ['Total', cycle.sessions.length, '', formatDuration(cycle.totalMinutes)],
+                style: '2'
+            });
+            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
+
+            const safeStudentName =
+                student.name.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Student';
+
+            try {
+                downloadXlsx(
+                    `${safeStudentName}-Fee-Cycle-${cycle.startDate}-to-${cycle.endDate || 'current'}.xlsx`,
+                    `${student.name} Fee Cycle ${cycle.startDate}`,
+                    exportRows,
+                    [22, 18, 18, 18]
+                );
+                showToast('Fee-cycle Excel report downloaded!');
+            } catch (err) {
+                console.error('Failed to export fee-cycle XLSX:', err);
+                showToast('Could not create the fee-cycle workbook.', 'error');
+            }
+        }
+
+        function exportCurrentFeeCycleExcel() {
+            if (!data.selectedStudentId) {
+                showToast('Please select a student first.', 'error');
+                return;
+            }
+
+            const cycles = getFeeCyclesForStudent(data.selectedStudentId);
+            if (cycles.length === 0) {
+                showToast('Record a fee received date first.', 'error');
+                return;
+            }
+
+            exportStudentFeeCycleExcel(cycles[0].paymentId);
+        }
+
+        function exportAllFeeCyclesExcel() {
+            if (!data.selectedStudentId) {
+                showToast('Please select a student first.', 'error');
+                return;
+            }
+
+            const student = data.students.find(s => s.id === data.selectedStudentId);
+            const cycles = getFeeCyclesForStudent(data.selectedStudentId);
+
+            if (!student || cycles.length === 0) {
+                showToast('Record at least one fee received date first.', 'error');
+                return;
+            }
+
+            const exportRows = [
+                { cells: [`${student.name} — All Fee Cycle Reports`], style: '2' },
+                { cells: [`Fee cycles recorded: ${cycles.length}`] },
+                { cells: [] }
+            ];
+
+            let grandTotalMinutes = 0;
+            let grandTotalSessions = 0;
+
+            cycles.forEach((cycle, index) => {
+                const cycleEndLabel = cycle.endDate
+                    ? formatDateFriendly(cycle.endDate)
+                    : 'Until next fee is received';
+
+                exportRows.push({
+                    cells: [
+                        `Fee Cycle ${index + 1}`,
+                        `Fee received: ${formatDateFriendly(cycle.startDate)}`
+                    ],
+                    style: '2'
+                });
+                exportRows.push({
+                    cells: [
+                        `Cycle period: ${formatDateFriendly(cycle.startDate)} – ${cycleEndLabel}`,
+                        `Next fee: ${cycle.nextPaymentDate ? formatDateFriendly(cycle.nextPaymentDate) : 'Not yet recorded'}`
+                    ]
+                });
+                exportRows.push({
+                    cells: ['Date', 'Start Time', 'End Time', 'Duration'],
+                    style: '1'
+                });
+
+                cycle.sessions.forEach(session => {
+                    exportRows.push({
+                        cells: [
+                            formatDateFriendly(session.date),
+                            formatTimeFriendly(session.startTime),
+                            formatTimeFriendly(session.endTime),
+                            formatDuration(session.durationMinutes)
+                        ]
+                    });
+                });
+
+                exportRows.push({
+                    cells: ['Cycle Total', cycle.sessions.length, '', formatDuration(cycle.totalMinutes)],
+                    style: '2'
+                });
+                exportRows.push({ cells: [] });
+
+                grandTotalMinutes += cycle.totalMinutes;
+                grandTotalSessions += cycle.sessions.length;
+            });
+
+            const firstStartDate = cycles[cycles.length - 1].startDate;
+            const beforeFirstSessions = data.sessions
+                .filter(s =>
+                    s.studentId === data.selectedStudentId &&
+                    dateStringToDayNumber(s.date) < dateStringToDayNumber(firstStartDate)
+                )
+                .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+
+            if (beforeFirstSessions.length > 0) {
+                exportRows.push({ cells: ['Sessions Before First Fee', '', '', ''], style: '2' });
+                exportRows.push({ cells: ['Date', 'Start Time', 'End Time', 'Duration'], style: '1' });
+
+                let beforeMinutes = 0;
+                beforeFirstSessions.forEach(session => {
+                    exportRows.push({
+                        cells: [
+                            formatDateFriendly(session.date),
+                            formatTimeFriendly(session.startTime),
+                            formatTimeFriendly(session.endTime),
+                            formatDuration(session.durationMinutes)
+                        ]
+                    });
+                    beforeMinutes += session.durationMinutes;
+                });
+
+                exportRows.push({
+                    cells: ['Before First Fee Total', beforeFirstSessions.length, '', formatDuration(beforeMinutes)],
+                    style: '2'
+                });
+                exportRows.push({ cells: [] });
+            }
+
+            exportRows.push({
+                cells: ['Grand Total', grandTotalSessions, '', formatDuration(grandTotalMinutes)],
+                style: '2'
+            });
+            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
+
+            const safeStudentName =
+                student.name.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Student';
+
+            try {
+                downloadXlsx(
+                    `${safeStudentName}-All-Fee-Cycles.xlsx`,
+                    `${student.name} Fee Cycles`,
+                    exportRows,
+                    [34, 28, 18, 22]
+                );
+                showToast('All fee-cycle Excel reports downloaded!');
+            } catch (err) {
+                console.error('Failed to export all fee-cycle XLSX:', err);
+                showToast('Could not create the fee-cycle workbook.', 'error');
+            }
+        }
+
         // ===================== JSON IMPORT / EXPORT =====================
         function exportData() {
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -2043,6 +2714,11 @@
                                 startTime: s.startTime,
                                 endTime: s.endTime,
                                 durationMinutes: s.durationMinutes
+                            })),
+                            feePayments: (imported.feePayments || []).map(p => ({
+                                id: p.id,
+                                studentId: p.studentId,
+                                date: p.date
                             })),
                             selectedStudentId: imported.selectedStudentId || null
                         };
@@ -2101,6 +2777,11 @@
                 return { valid: false, error: 'Backup contains more than 10 students.' };
             }
 
+            const feePayments = candidate.feePayments === undefined ? [] : candidate.feePayments;
+            if (!Array.isArray(feePayments)) {
+                return { valid: false, error: 'Fee payments must be an array.' };
+            }
+
             const studentIds = new Set();
             const studentNames = new Set();
             for (const student of candidate.students) {
@@ -2148,6 +2829,30 @@
                 }
 
                 sessionIds.add(session.id);
+            }
+
+            const feePaymentIds = new Set();
+            for (const payment of feePayments) {
+                if (!payment || typeof payment !== 'object' ||
+                    typeof payment.id !== 'string' || !payment.id.trim() ||
+                    typeof payment.studentId !== 'string' || !studentIds.has(payment.studentId) ||
+                    !isValidDateString(payment.date)) {
+                    return { valid: false, error: 'Backup contains an invalid fee payment.' };
+                }
+
+                if (feePaymentIds.has(payment.id)) {
+                    return { valid: false, error: 'Backup contains duplicate fee payment IDs.' };
+                }
+                feePaymentIds.add(payment.id);
+            }
+
+            for (let i = 0; i < feePayments.length; i++) {
+                for (let j = i + 1; j < feePayments.length; j++) {
+                    if (feePayments[i].studentId === feePayments[j].studentId &&
+                        feePayments[i].date === feePayments[j].date) {
+                        return { valid: false, error: 'Backup contains duplicate fee payment dates for a student.' };
+                    }
+                }
             }
 
             if (candidate.selectedStudentId !== null &&
