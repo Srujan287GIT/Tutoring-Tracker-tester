@@ -1685,8 +1685,9 @@
                 xml += `<row r="${rowNumber}">`;
 
                 row.cells.forEach((cell, columnIndex) => {
-                    const value = cell && cell.value !== undefined ? cell.value : '';
-                    const style = cell?.style || rowStyle;
+                    const isCellObject = cell && typeof cell === 'object' && Object.prototype.hasOwnProperty.call(cell, 'value');
+                    const value = isCellObject ? cell.value : cell;
+                    const style = (isCellObject ? cell.style : '') || rowStyle;
                     const ref = `${excelColumnName(columnIndex + 1)}${rowNumber}`;
                     const styleAttr = style ? ` s="${style}"` : '';
 
