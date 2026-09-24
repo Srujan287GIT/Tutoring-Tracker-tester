@@ -19,8 +19,8 @@
     </script>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 
     <title>Tutoring Time Tracker</title>
     <style>
@@ -385,6 +385,11 @@
             width: auto;
         }
 
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
         .btn-group {
             display: flex;
             gap: 10px;
@@ -539,8 +544,15 @@
         }
 
         /* History Table */
+        .history-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .history-table {
             width: 100%;
+            min-width: 560px;
             border-collapse: collapse;
             font-size: 0.95rem;
         }
@@ -1008,7 +1020,7 @@
 
     <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMessage">
             <h3 id="modalTitle">Confirm</h3>
             <p id="modalMessage">Are you sure?</p>
             <div class="modal-actions">
