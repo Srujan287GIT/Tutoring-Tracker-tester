@@ -879,7 +879,11 @@
         }
 
         // Apply saved theme (also set early in <head> to avoid flash)
-        applyTheme(localStorage.getItem('tutorTracker_theme') || 'light');
+        let initialTheme = 'light';
+        try {
+            initialTheme = localStorage.getItem('tutorTracker_theme') || 'light';
+        } catch (e) {}
+        applyTheme(initialTheme);
 
         // ===================== SERVICE WORKER =====================
         if ('serviceWorker' in navigator) {
@@ -926,19 +930,23 @@
 
         closeInstallBanner.addEventListener('click', () => {
             installBanner.classList.remove('show');
-            localStorage.setItem('tutorTracker_hideInstall', '1');
-            localStorage.setItem('tutorTracker_hideInstallDate', String(Date.now()));
+            try {
+                localStorage.setItem('tutorTracker_hideInstall', '1');
+                localStorage.setItem('tutorTracker_hideInstallDate', String(Date.now()));
+            } catch (e) {}
         });
 
-        // Show banner again after 7 days if dismissed
-        if (localStorage.getItem('tutorTracker_hideInstall') === '1') {
-            const hiddenDate = localStorage.getItem('tutorTracker_hideInstallDate');
-            const now = Date.now();
-            if (!hiddenDate || (now - parseInt(hiddenDate)) > 7 * 24 * 60 * 60 * 1000) {
-                localStorage.removeItem('tutorTracker_hideInstall');
-                localStorage.removeItem('tutorTracker_hideInstallDate');
+        // Show banner again after 7 days if dismissed.
+        try {
+            if (localStorage.getItem('tutorTracker_hideInstall') === '1') {
+                const hiddenDate = localStorage.getItem('tutorTracker_hideInstallDate');
+                const now = Date.now();
+                if (!hiddenDate || (now - parseInt(hiddenDate, 10)) > 7 * 24 * 60 * 60 * 1000) {
+                    localStorage.removeItem('tutorTracker_hideInstall');
+                    localStorage.removeItem('tutorTracker_hideInstallDate');
+                }
             }
-        }
+        } catch (e) {}
 
         // ===================== DATA =====================
         const STORAGE_KEY = 'tutoringTracker_v1';
