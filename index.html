@@ -1023,14 +1023,20 @@
         function applyTheme(theme) {
             const dark = theme === 'dark';
             document.documentElement.classList.toggle('dark', dark);
-            localStorage.setItem('tutorTracker_theme', theme);
+            try {
+                localStorage.setItem('tutorTracker_theme', theme);
+            } catch (e) {}
             document.getElementById('themeToggle').textContent = dark ? '☀️' : '🌙';
             const metaTheme = document.querySelector('meta[name="theme-color"]');
             if (metaTheme) metaTheme.setAttribute('content', dark ? '#14161b' : '#4f8cff');
         }
 
         // Apply saved theme (also set early in <head> to avoid flash)
-        applyTheme(localStorage.getItem('tutorTracker_theme') || 'light');
+        let initialTheme = 'light';
+        try {
+            initialTheme = localStorage.getItem('tutorTracker_theme') || 'light';
+        } catch (e) {}
+        applyTheme(initialTheme);
 
         // ===================== SERVICE WORKER =====================
         if ('serviceWorker' in navigator) {
@@ -1081,6 +1087,8 @@
 
         // ===================== DATA =====================
         const STORAGE_KEY = 'tutoringTracker_v1';
+        const MAX_STUDENTS = 10;
+        const MAX_SESSION_MINUTES = 12 * 60;
 
         let data = {
             students: [],
@@ -1091,6 +1099,8 @@
 
         let editingSessionId = null;
         let modalCallback = null;
+        let modalPreviousFocus = null;
+        let toastTimer = null;
         let historyViewMode = 'cycle'; // 'cycle' | 'month'
         let historyCycleFilter = 'all';
         let historyMonthFilter = 'all';
@@ -1112,15 +1122,27 @@
         function loadData() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    data = JSON.parse(saved);
+                if (!saved) return;
+
+                const parsed = JSON.parse(saved);
+                const validation = validateTrackerData(parsed);
+                if (!validation.valid) {
+                    console.error('Stored data is invalid:', validation.error);
+                    return;
+                }
+
+                data = {
+                    students: parsed.students,
+                    sessions: parsed.sessions,
+                    fees: Array.isArray(parsed.fees) ? parsed.fees : [],
+                    selectedStudentId: parsed.selectedStudentId || null
+                };
+
+                if (!data.students.some(s => s.id === data.selectedStudentId)) {
+                    data.selectedStudentId = null;
                 }
             } catch (e) {
                 console.error('Failed to load data', e);
-            }
-            // Migrate: ensure fees array exists
-            if (!Array.isArray(data.fees)) {
-                data.fees = [];
             }
         }
 
@@ -1178,7 +1200,7 @@
                     return;
                 }
                 const student = {
-                    id: 's_' + Date.now(),
+                    id: makeId('s_'),
                     name: trimmed
                 };
                 data.students.push(student);
@@ -1300,6 +1322,14 @@
                 applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
             });
             document.getElementById('sessionForm').addEventListener('submit', handleSaveSession);
+            document.getElementById('studentSelect').addEventListener('change', (e) => {
+                data.selectedStudentId = e.target.value || null;
+                historyCycleFilter = 'all';
+                historyMonthFilter = 'all';
+                saveData();
+                renderStudents();
+                renderHistory();
+            });
             document.getElementById('currentTimeBtn').addEventListener('click', useCurrentTime);
             document.getElementById('summaryMonth').addEventListener('change', renderSummary);
             document.getElementById('prevMonth').addEventListener('click', () => shiftMonth(-1));
@@ -1335,17 +1365,27 @@
 
         function useCurrentTime() {
             const now = new Date();
-            const h24 = now.getHours();
-            const m = now.getMinutes();
-            let h = h24 % 12;
-            if (h === 0) h = 12;
-            const ampm = h24 >= 12 ? 'PM' : 'AM';
-            const roundedM = Math.round(m / 5) * 5;
-            const mStr = String(roundedM === 60 ? 0 : roundedM).padStart(2, '0');
-            document.getElementById('startHour').value = h;
-            document.getElementById('startMinute').value = mStr;
-            document.getElementById('startAmPm').value = ampm;
+            now.setSeconds(0, 0);
+
+            const roundedMinutes = Math.round(now.getMinutes() / 5) * 5;
+            if (roundedMinutes === 60) {
+                now.setHours(now.getHours() + 1);
+                now.setMinutes(0);
+            } else {
+                now.setMinutes(roundedMinutes);
+            }
+
+            const hourText = String(now.getHours()).padStart(2, '0');
+            const minuteText = String(now.getMinutes()).padStart(2, '0');
+
+            setTimeValue(
+                hourText + ':' + minuteText,
+                'startHour',
+                'startMinute',
+                'startAmPm'
+            );
             document.getElementById('sessionDate').value = formatDateForInput(now);
+            clearErrors();
             showToast('Current time set as start time');
         }
 
@@ -1381,16 +1421,18 @@
 
             const start = parseTime(startTime);
             const end = parseTime(endTime);
-            let durationMinutes = (end.hours * 60 + end.minutes) - (start.hours * 60 + start.minutes);
+            const startTotalMinutes = start.hours * 60 + start.minutes;
+            const endTotalMinutes = end.hours * 60 + end.minutes;
 
-            if (durationMinutes < 0) {
-                durationMinutes += 24 * 60;
-            }
-
-            if (durationMinutes === 0) {
-                document.getElementById('endError').textContent = 'End time must be after start time.';
+            if (endTotalMinutes <= startTotalMinutes) {
+                document.getElementById('endError').textContent =
+                    endTotalMinutes === startTotalMinutes
+                        ? 'End time must be after start time.'
+                        : 'End time cannot be earlier than start time. Overnight sessions are not allowed.';
                 return;
             }
+
+            const durationMinutes = endTotalMinutes - startTotalMinutes;
 
             if (durationMinutes > 12 * 60) {
                 document.getElementById('endError').textContent = 'Session cannot be longer than 12 hours.';
@@ -1398,7 +1440,7 @@
             }
 
             const session = {
-                id: editingSessionId || 'sess_' + Date.now(),
+                id: editingSessionId || makeId('sess_'),
                 studentId,
                 date,
                 startTime,
@@ -1558,7 +1600,7 @@
             }
 
             data.fees.push({
-                id: 'fee_' + Date.now(),
+                id: makeId('fee_'),
                 studentId: data.selectedStudentId,
                 date: dateVal
             });
@@ -1841,7 +1883,9 @@
             if (!session) return;
 
             editingSessionId = sessionId;
+            data.selectedStudentId = session.studentId;
             document.getElementById('studentSelect').value = session.studentId;
+            renderStudents();
             document.getElementById('sessionDate').value = session.date;
             setTimeValue(session.startTime, 'startHour', 'startMinute', 'startAmPm');
             setTimeValue(session.endTime, 'endHour', 'endMinute', 'endAmPm');
@@ -2158,6 +2202,133 @@ td { padding: 8px; border: 1px solid #ccc; }
         }
 
         // ===================== UTILS =====================
+        function isValidDateString(value) {
+            if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+            const [year, month, day] = value.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.getFullYear() === year &&
+                   date.getMonth() === month - 1 &&
+                   date.getDate() === day;
+        }
+
+        function isValidTimeString(value) {
+            if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) return false;
+            const [hours, minutes] = value.split(':').map(Number);
+            return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+        }
+
+        function validateTrackerData(candidate) {
+            if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+                return { valid: false, error: 'Backup must contain an object.' };
+            }
+            if (!Array.isArray(candidate.students) || !Array.isArray(candidate.sessions)) {
+                return { valid: false, error: 'Students and sessions must be arrays.' };
+            }
+            if (candidate.students.length > MAX_STUDENTS) {
+                return { valid: false, error: 'Backup contains more than 10 students.' };
+            }
+
+            const fees = candidate.fees === undefined ? [] : candidate.fees;
+            if (!Array.isArray(fees)) {
+                return { valid: false, error: 'Fees must be an array.' };
+            }
+
+            const studentIds = new Set();
+            const studentNames = new Set();
+
+            for (const student of candidate.students) {
+                if (!student || typeof student !== 'object' ||
+                    typeof student.id !== 'string' || !student.id.trim() ||
+                    typeof student.name !== 'string' || !student.name.trim()) {
+                    return { valid: false, error: 'Backup contains an invalid student.' };
+                }
+
+                const normalizedName = student.name.trim().toLowerCase();
+                if (studentIds.has(student.id)) {
+                    return { valid: false, error: 'Backup contains duplicate student IDs.' };
+                }
+                if (studentNames.has(normalizedName)) {
+                    return { valid: false, error: 'Backup contains duplicate student names.' };
+                }
+
+                studentIds.add(student.id);
+                studentNames.add(normalizedName);
+            }
+
+            const sessionIds = new Set();
+            for (const session of candidate.sessions) {
+                if (!session || typeof session !== 'object' ||
+                    typeof session.id !== 'string' || !session.id.trim() ||
+                    typeof session.studentId !== 'string' ||
+                    !studentIds.has(session.studentId) ||
+                    !isValidDateString(session.date) ||
+                    !isValidTimeString(session.startTime) ||
+                    !isValidTimeString(session.endTime) ||
+                    !Number.isInteger(session.durationMinutes) ||
+                    session.durationMinutes <= 0 ||
+                    session.durationMinutes > MAX_SESSION_MINUTES) {
+                    return { valid: false, error: 'Backup contains an invalid session.' };
+                }
+
+                if (sessionIds.has(session.id)) {
+                    return { valid: false, error: 'Backup contains duplicate session IDs.' };
+                }
+
+                const start = parseTime(session.startTime);
+                const end = parseTime(session.endTime);
+                const startTotal = start.hours * 60 + start.minutes;
+                const endTotal = end.hours * 60 + end.minutes;
+
+                if (endTotal <= startTotal ||
+                    endTotal - startTotal !== session.durationMinutes) {
+                    return { valid: false, error: 'Backup contains an inconsistent session duration.' };
+                }
+
+                sessionIds.add(session.id);
+            }
+
+            const feeIds = new Set();
+            for (const fee of fees) {
+                if (!fee || typeof fee !== 'object' ||
+                    typeof fee.id !== 'string' || !fee.id.trim() ||
+                    typeof fee.studentId !== 'string' ||
+                    !studentIds.has(fee.studentId) ||
+                    !isValidDateString(fee.date)) {
+                    return { valid: false, error: 'Backup contains an invalid fee record.' };
+                }
+
+                if (feeIds.has(fee.id)) {
+                    return { valid: false, error: 'Backup contains duplicate fee IDs.' };
+                }
+                feeIds.add(fee.id);
+            }
+
+            for (let i = 0; i < fees.length; i++) {
+                for (let j = i + 1; j < fees.length; j++) {
+                    if (fees[i].studentId === fees[j].studentId &&
+                        fees[i].date === fees[j].date) {
+                        return { valid: false, error: 'Backup contains duplicate fee dates for a student.' };
+                    }
+                }
+            }
+
+            if (candidate.selectedStudentId !== null &&
+                candidate.selectedStudentId !== undefined &&
+                (typeof candidate.selectedStudentId !== 'string' ||
+                 !studentIds.has(candidate.selectedStudentId))) {
+                return { valid: false, error: 'Backup contains an invalid selected student.' };
+            }
+
+            return { valid: true };
+        }
+
+        function makeId(prefix) {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return prefix + crypto.randomUUID();
+            }
+            return prefix + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+        }
+
         function parseTime(timeStr) {
             const [h, m] = timeStr.split(':').map(Number);
             return { hours: h, minutes: m };
