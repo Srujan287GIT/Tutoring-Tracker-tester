@@ -2740,22 +2740,40 @@
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show ' + type;
-            setTimeout(() => {
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
                 toast.classList.remove('show');
+                toastTimer = null;
             }, 3000);
         }
 
         function openModal(title, message, onConfirm) {
+            modalPreviousFocus = document.activeElement;
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').textContent = message;
             modalCallback = onConfirm;
-            document.getElementById('modalOverlay').classList.add('open');
+
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.add('open');
+            document.getElementById('modalCancel').focus();
         }
 
         function closeModal() {
             document.getElementById('modalOverlay').classList.remove('open');
             modalCallback = null;
+
+            if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') {
+                modalPreviousFocus.focus();
+            }
+            modalPreviousFocus = null;
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('modalOverlay').classList.contains('open')) {
+                closeModal();
+            }
+        });
 
         // ===================== START =====================
         init();
