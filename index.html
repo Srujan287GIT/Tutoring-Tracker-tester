@@ -1703,8 +1703,9 @@
 
             xml += '</sheetData>';
 
-            if (rows.length && rows[0].cells.length) {
-                const lastCell = `${excelColumnName(rows[0].cells.length)}${rows.length}`;
+            if (rows.length) {
+                const lastColumn = rows.reduce((max, row) => Math.max(max, row.cells.length), 1);
+                const lastCell = `${excelColumnName(lastColumn)}${rows.length}`;
                 xml += `<dimension ref="A1:${lastCell}"/>`;
             }
 
