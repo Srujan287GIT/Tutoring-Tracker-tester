@@ -2248,16 +2248,24 @@
 
         function downloadXlsx(filename, sheetName, rows, widths) {
             const blob = createXlsxBlob(sheetName, rows, widths);
+
+            if (!blob || blob.size === 0) {
+                throw new Error('Generated Excel workbook is empty.');
+            }
+
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+            a.remove();
 
+            // Keep the object URL alive long enough for the browser/PWA download
+            // pipeline to consume the Blob before revoking it.
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
         // ===================== MONTHLY EXCEL EXPORT =====================
         function exportMonthlyExcel() {
             const monthVal = document.getElementById('summaryMonth').value;
