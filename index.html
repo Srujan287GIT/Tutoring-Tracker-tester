@@ -1531,6 +1531,297 @@
             );
         }
 
+        // ===================== NATIVE XLSX EXPORT =====================
+        function escapeXml(text) {
+            return String(text)
+                .replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function excelColumnName(columnNumber) {
+            let name = '';
+            let n = columnNumber;
+            while (n > 0) {
+                const remainder = (n - 1) % 26;
+                name = String.fromCharCode(65 + remainder) + name;
+                n = Math.floor((n - 1) / 26);
+            }
+            return name;
+        }
+
+        function sanitizeSheetName(name) {
+            return String(name || 'Sheet1')
+                .replace(/[\\\\\\/\\?\\*\\[\\]:]/g, '')
+                .slice(0, 31) || 'Sheet1';
+        }
+
+        function bytesToUint32(value) {
+            return new Uint8Array([
+                value & 0xff,
+                (value >>> 8) & 0xff,
+                (value >>> 16) & 0xff,
+                (value >>> 24) & 0xff
+            ]);
+        }
+
+        function bytesToUint16(value) {
+            return new Uint8Array([
+                value & 0xff,
+                (value >>> 8) & 0xff
+            ]);
+        }
+
+        function crc32(bytes) {
+            let crc = 0xffffffff;
+            for (let i = 0; i < bytes.length; i++) {
+                crc ^= bytes[i];
+                for (let bit = 0; bit < 8; bit++) {
+                    crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+                }
+            }
+            return (crc ^ 0xffffffff) >>> 0;
+        }
+
+        function concatUint8Arrays(parts) {
+            const total = parts.reduce((sum, part) => sum + part.length, 0);
+            const result = new Uint8Array(total);
+            let offset = 0;
+            parts.forEach(part => {
+                result.set(part, offset);
+                offset += part.length;
+            });
+            return result;
+        }
+
+        function createZipArchive(files) {
+            const encoder = new TextEncoder();
+            const localParts = [];
+            const centralParts = [];
+            let offset = 0;
+
+            files.forEach(file => {
+                const name = encoder.encode(file.name);
+                const content = encoder.encode(file.content);
+                const checksum = crc32(content);
+
+                const localHeader = concatUint8Arrays([
+                    new Uint8Array([0x50,0x4b,0x03,0x04]),
+                    bytesToUint16(20),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint32(checksum),
+                    bytesToUint32(content.length),
+                    bytesToUint32(content.length),
+                    bytesToUint16(name.length),
+                    bytesToUint16(0)
+                ]);
+
+                localParts.push(localHeader, name, content);
+
+                const centralHeader = concatUint8Arrays([
+                    new Uint8Array([0x50,0x4b,0x01,0x02]),
+                    bytesToUint16(20),
+                    bytesToUint16(20),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint32(checksum),
+                    bytesToUint32(content.length),
+                    bytesToUint32(content.length),
+                    bytesToUint16(name.length),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint16(0),
+                    bytesToUint32(0),
+                    bytesToUint32(offset)
+                ]);
+
+                centralParts.push(centralHeader, name);
+                offset += localHeader.length + name.length + content.length;
+            });
+
+            const localData = concatUint8Arrays(localParts);
+            const centralData = concatUint8Arrays(centralParts);
+            const endRecord = concatUint8Arrays([
+                new Uint8Array([0x50,0x4b,0x05,0x06]),
+                bytesToUint16(0),
+                bytesToUint16(0),
+                bytesToUint16(files.length),
+                bytesToUint16(files.length),
+                bytesToUint32(centralData.length),
+                bytesToUint32(localData.length),
+                bytesToUint16(0)
+            ]);
+
+            return concatUint8Arrays([localData, centralData, endRecord]);
+        }
+
+        function buildWorksheetXml(rows, widths) {
+            let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+            xml += '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+            xml += '<sheetViews><sheetView workbookViewId="0"/></sheetViews>';
+
+            if (widths && widths.length) {
+                xml += '<cols>';
+                widths.forEach((width, index) => {
+                    xml += `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`;
+                });
+                xml += '</cols>';
+            }
+
+            xml += '<sheetData>';
+
+            rows.forEach((row, rowIndex) => {
+                const rowNumber = rowIndex + 1;
+                const rowStyle = row.style || '';
+                xml += `<row r="${rowNumber}">`;
+
+                row.cells.forEach((cell, columnIndex) => {
+                    const value = cell && cell.value !== undefined ? cell.value : '';
+                    const style = cell?.style || rowStyle;
+                    const ref = `${excelColumnName(columnIndex + 1)}${rowNumber}`;
+                    const styleAttr = style ? ` s="${style}"` : '';
+
+                    if (typeof value === 'number' && Number.isFinite(value)) {
+                        xml += `<c r="${ref}"${styleAttr}><v>${value}</v></c>`;
+                    } else {
+                        const text = escapeXml(value ?? '');
+                        xml += `<c r="${ref}" t="inlineStr"${styleAttr}><is><t xml:space="preserve">${text}</t></is></c>`;
+                    }
+                });
+
+                xml += '</row>';
+            });
+
+            xml += '</sheetData>';
+
+            if (rows.length && rows[0].cells.length) {
+                const lastCell = `${excelColumnName(rows[0].cells.length)}${rows.length}`;
+                xml += `<dimension ref="A1:${lastCell}"/>`;
+            }
+
+            xml += '</worksheet>';
+            return xml;
+        }
+
+        function createXlsxBlob(sheetName, rows, widths = []) {
+            const safeSheetName = sanitizeSheetName(sheetName);
+            const now = new Date().toISOString();
+
+            const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+    <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+    <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+    <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`;
+
+            const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+    <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`;
+
+            const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+    <sheets>
+        <sheet name="${escapeXml(safeSheetName)}" sheetId="1" r:id="rId1"/>
+    </sheets>
+</workbook>`;
+
+            const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+            const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <fonts count="2">
+        <font><sz val="11"/><name val="Calibri"/></font>
+        <font><b/><sz val="11"/><name val="Calibri"/></font>
+    </fonts>
+    <fills count="3">
+        <fill><patternFill patternType="none"/></fill>
+        <fill><patternFill patternType="gray125"/></fill>
+        <fill><patternFill patternType="solid"><fgColor rgb="FFE8F0FE"/><bgColor indexed="64"/></patternFill></fill>
+    </fills>
+    <borders count="1">
+        <border><left/><right/><top/><bottom/><diagonal/></border>
+    </borders>
+    <cellStyleXfs count="1">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+    </cellStyleXfs>
+    <cellXfs count="3">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+        <xf numFmtId="0" fontId="1" fillId="2" borderId="0"/>
+        <xf numFmtId="0" fontId="1" fillId="2" borderId="0"/>
+    </cellXfs>
+    <cellStyles count="1">
+        <cellStyle name="Normal" xfId="0" builtinId="0"/>
+    </cellStyles>
+</styleSheet>`;
+
+            const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+                   xmlns:dc="http://purl.org/dc/elements/1.1/"
+                   xmlns:dcterms="http://purl.org/dc/terms/"
+                   xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <dc:title>${escapeXml(safeSheetName)}</dc:title>
+    <dc:creator>Tutoring Time Tracker</dc:creator>
+    <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+</cp:coreProperties>`;
+
+            const app = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+            xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+    <Application>Tutoring Time Tracker</Application>
+</Properties>`;
+
+            const worksheet = buildWorksheetXml(rows, widths);
+
+            const zipBytes = createZipArchive([
+                { name: '[Content_Types].xml', content: contentTypes },
+                { name: '_rels/.rels', content: rootRels },
+                { name: 'xl/workbook.xml', content: workbook },
+                { name: 'xl/_rels/workbook.xml.rels', content: workbookRels },
+                { name: 'xl/worksheets/sheet1.xml', content: worksheet },
+                { name: 'xl/styles.xml', content: styles },
+                { name: 'docProps/core.xml', content: core },
+                { name: 'docProps/app.xml', content: app }
+            ]);
+
+            return new Blob([zipBytes], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+        }
+
+        function downloadXlsx(filename, sheetName, rows, widths) {
+            const blob = createXlsxBlob(sheetName, rows, widths);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         // ===================== MONTHLY EXCEL EXPORT =====================
         function exportMonthlyExcel() {
             const monthVal = document.getElementById('summaryMonth').value;
@@ -1540,22 +1831,25 @@
             }
 
             const [year, month] = monthVal.split('-').map(Number);
-            const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const monthName = new Date(year, month - 1, 1)
+                .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-            let rows = [];
+            const rows = [];
             data.students.forEach(student => {
                 const studentSessions = data.sessions.filter(s => {
                     const d = new Date(s.date + 'T00:00:00');
-                    return s.studentId === student.id && d.getFullYear() === year && d.getMonth() + 1 === month;
+                    return s.studentId === student.id &&
+                           d.getFullYear() === year &&
+                           d.getMonth() + 1 === month;
                 });
+
                 const totalMinutes = studentSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
-                const totalHours = (totalMinutes / 60).toFixed(2);
                 rows.push({
                     name: student.name,
                     sessions: studentSessions.length,
                     totalTime: formatDuration(totalMinutes),
-                    totalHours: totalHours,
-                    totalMinutes: totalMinutes
+                    totalHours: Number((totalMinutes / 60).toFixed(2)),
+                    totalMinutes
                 });
             });
 
@@ -1564,54 +1858,49 @@
                 return;
             }
 
-            let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8"><style>
-table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; }
-th { background: #4f8cff; color: white; font-weight: bold; padding: 10px; border: 1px solid #3a6fd6; text-align: left; }
-td { padding: 8px; border: 1px solid #ccc; }
-.total-row { background: #f0f6ff; font-weight: bold; }
-</style></head>
-<body>
-<h2>Tutoring Report — ${escapeHtml(monthName)}</h2>
-<table>
-<thead>
-<tr><th>Student</th><th>Sessions</th><th>Total Time</th><th>Total Hours (Decimal)</th></tr>
-</thead>
-<tbody>`;
+            const exportRows = [
+                { cells: [`Tutoring Report — ${monthName}`], style: '2' },
+                { cells: [] },
+                {
+                    cells: ['Student', 'Sessions', 'Total Time', 'Total Hours (Decimal)'],
+                    style: '1'
+                }
+            ];
 
             let grandTotalMinutes = 0;
             let grandTotalSessions = 0;
 
             rows.forEach(row => {
                 if (row.sessions > 0) {
-                    html += `<tr><td>${escapeHtml(row.name)}</td><td>${row.sessions}</td><td>${row.totalTime}</td><td>${row.totalHours}</td></tr>`;
+                    exportRows.push({
+                        cells: [row.name, row.sessions, row.totalTime, row.totalHours]
+                    });
                     grandTotalMinutes += row.totalMinutes;
                     grandTotalSessions += row.sessions;
                 }
             });
 
-            const grandTotalHours = (grandTotalMinutes / 60).toFixed(2);
+            const grandTotalHours = Number((grandTotalMinutes / 60).toFixed(2));
             const grandTotalTime = formatDuration(grandTotalMinutes);
 
-            html += `</tbody>
-<tfoot>
-<tr class="total-row"><td>Grand Total</td><td>${grandTotalSessions}</td><td>${grandTotalTime}</td><td>${grandTotalHours}</td></tr>
-</tfoot>
-</table>
-<br><p style="color:#666; font-size:12px;">Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}</p>
-</body></html>`;
+            exportRows.push({
+                cells: ['Grand Total', grandTotalSessions, grandTotalTime, grandTotalHours],
+                style: '2'
+            });
+            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
 
-            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Tutoring-Report-${monthVal}.xls`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast('Excel report downloaded!');
+            try {
+                downloadXlsx(
+                    `Tutoring-Report-${monthVal}.xlsx`,
+                    `Report ${monthName}`,
+                    exportRows,
+                    [28, 12, 18, 22]
+                );
+                showToast('Native Excel (.xlsx) report downloaded!');
+            } catch (err) {
+                console.error('Failed to export XLSX:', err);
+                showToast('Could not create the Excel workbook.', 'error');
+            }
         }
 
         // ===================== STUDENT EXCEL EXPORT =====================
@@ -1626,7 +1915,10 @@ td { padding: 8px; border: 1px solid #ccc; }
 
             let sessions = data.sessions
                 .filter(s => s.studentId === data.selectedStudentId)
-                .sort((a, b) => new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime));
+                .sort((a, b) =>
+                    new Date(a.date + 'T' + a.startTime) -
+                    new Date(b.date + 'T' + b.startTime)
+                );
 
             let monthLabel = '';
             let fileSuffix = formatDateForInput(new Date());
@@ -1634,62 +1926,67 @@ td { padding: 8px; border: 1px solid #ccc; }
             if (monthVal) {
                 sessions = sessions.filter(s => s.date.slice(0, 7) === monthVal);
                 const [y, mo] = monthVal.split('-').map(Number);
-                monthLabel = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                monthLabel = new Date(y, mo - 1, 1)
+                    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
                 fileSuffix = monthVal;
             }
 
             if (sessions.length === 0) {
-                showToast(monthVal ? `No sessions to export for ${monthLabel}.` : 'No sessions to export for this student.', 'error');
+                showToast(
+                    monthVal
+                        ? `No sessions to export for ${monthLabel}.`
+                        : 'No sessions to export for this student.',
+                    'error'
+                );
                 return;
             }
 
-            const heading = monthLabel
-                ? `${escapeHtml(student.name)} — Tutoring Sessions (${monthLabel})`
-                : `${escapeHtml(student.name)} — Tutoring Sessions`;
-
-            let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8"><style>
-table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; width: 100%; }
-th { background: #4f8cff; color: white; font-weight: bold; padding: 10px; border: 1px solid #3a6fd6; text-align: left; }
-td { padding: 8px; border: 1px solid #ccc; }
-.total-row { background: #f0f6ff; font-weight: bold; }
-.date-col { width: 120px; }
-.time-col { width: 100px; }
-.dur-col { width: 100px; }
-</style></head>
-<body>
-<h2>${heading}</h2>
-<table>
-<thead>
-<tr><th class="date-col">Date</th><th class="time-col">Start Time</th><th class="time-col">End Time</th><th class="dur-col">Duration</th></tr>
-</thead>
-<tbody>`;
+            const exportRows = [
+                {
+                    cells: [
+                        monthLabel
+                            ? `${student.name} — Tutoring Sessions (${monthLabel})`
+                            : `${student.name} — Tutoring Sessions`
+                    ],
+                    style: '2'
+                },
+                { cells: [] },
+                { cells: ['Date', 'Start Time', 'End Time', 'Duration'], style: '1' }
+            ];
 
             let totalMinutes = 0;
             sessions.forEach(session => {
-                html += `<tr><td>${escapeHtml(formatDateFriendly(session.date))}</td><td>${escapeHtml(formatTimeFriendly(session.startTime))}</td><td>${escapeHtml(formatTimeFriendly(session.endTime))}</td><td>${formatDuration(session.durationMinutes)}</td></tr>`;
+                exportRows.push({
+                    cells: [
+                        formatDateFriendly(session.date),
+                        formatTimeFriendly(session.startTime),
+                        formatTimeFriendly(session.endTime),
+                        formatDuration(session.durationMinutes)
+                    ]
+                });
                 totalMinutes += session.durationMinutes;
             });
 
-            html += `</tbody>
-<tfoot>
-<tr class="total-row"><td colspan="3">Total</td><td>${formatDuration(totalMinutes)}</td></tr>
-</tfoot>
-</table>
-<br><p style="color:#666; font-size:12px;">Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}</p>
-</body></html>`;
+            exportRows.push({
+                cells: ['Total', '', '', formatDuration(totalMinutes)],
+                style: '2'
+            });
+            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
 
-            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${student.name.replace(/[^a-zA-Z0-9]/g, '_')}-Sessions-${fileSuffix}.xls`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const safeStudentName = student.name.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Student';
 
-            showToast('Excel report downloaded!');
+            try {
+                downloadXlsx(
+                    `${safeStudentName}-Sessions-${fileSuffix}.xlsx`,
+                    monthLabel ? `${student.name} ${monthLabel}` : student.name,
+                    exportRows,
+                    [18, 16, 16, 16]
+                );
+                showToast('Native Excel (.xlsx) report downloaded!');
+            } catch (err) {
+                console.error('Failed to export XLSX:', err);
+                showToast('Could not create the Excel workbook.', 'error');
+            }
         }
 
         function exportStudentExcelMonthly() {
