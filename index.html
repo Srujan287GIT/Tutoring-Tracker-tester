@@ -424,8 +424,15 @@
         }
 
         /* History Table */
+        .history-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .history-table {
             width: 100%;
+            min-width: 560px;
             border-collapse: collapse;
             font-size: 0.95rem;
         }
@@ -799,9 +806,9 @@
     <section class="card">
         <div class="card-title">📊 Monthly Summary</div>
         <div class="month-selector">
-            <button id="prevMonth">◀</button>
+            <button id="prevMonth" aria-label="Previous month" title="Previous month">◀</button>
             <input type="month" id="summaryMonth">
-            <button id="nextMonth">▶</button>
+            <button id="nextMonth" aria-label="Next month" title="Next month">▶</button>
         </div>
         <div class="summary-grid" id="summaryGrid"></div>
         <div style="margin-top: 16px;">
@@ -846,7 +853,7 @@
 
     <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMessage">
             <h3 id="modalTitle">Confirm</h3>
             <p id="modalMessage">Are you sure?</p>
             <div class="modal-actions">
@@ -861,7 +868,9 @@
         function applyTheme(theme) {
             const dark = theme === 'dark';
             document.documentElement.classList.toggle('dark', dark);
-            localStorage.setItem('tutorTracker_theme', theme);
+            try {
+                localStorage.setItem('tutorTracker_theme', theme);
+            } catch (e) {}
             document.getElementById('themeToggle').textContent = dark ? '☀️' : '🌙';
             const metaTheme = document.querySelector('meta[name="theme-color"]');
             if (metaTheme) metaTheme.setAttribute('content', dark ? '#14161b' : '#4f8cff');
@@ -887,6 +896,18 @@
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
+
+            let recentlyDismissed = false;
+            try {
+                const hiddenDate = parseInt(localStorage.getItem('tutorTracker_hideInstallDate') || '', 10);
+                recentlyDismissed =
+                    localStorage.getItem('tutorTracker_hideInstall') === '1' &&
+                    Number.isFinite(hiddenDate) &&
+                    (Date.now() - hiddenDate) <= 7 * 24 * 60 * 60 * 1000;
+            } catch (err) {}
+
+            if (recentlyDismissed) return;
+
             deferredPrompt = e;
             installBanner.classList.add('show');
         });
@@ -930,6 +951,7 @@
 
         let editingSessionId = null;
         let modalCallback = null;
+        let modalPreviousFocus = null;
         let historyMonthFilter = 'all';
 
         // ===================== INIT =====================
@@ -1142,6 +1164,13 @@
                 applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
             });
             document.getElementById('sessionForm').addEventListener('submit', handleSaveSession);
+            document.getElementById('studentSelect').addEventListener('change', (e) => {
+                data.selectedStudentId = e.target.value || null;
+                historyMonthFilter = 'all';
+                saveData();
+                renderStudents();
+                renderHistory();
+            });
             document.getElementById('currentTimeBtn').addEventListener('click', useCurrentTime);
             document.getElementById('summaryMonth').addEventListener('change', renderSummary);
             document.getElementById('prevMonth').addEventListener('click', () => shiftMonth(-1));
@@ -1405,8 +1434,8 @@
                     <td>${formatDuration(session.durationMinutes)}</td>
                     <td>
                         <div class="actions">
-                            <button class="edit-btn" data-id="${session.id}">Edit</button>
-                            <button class="delete-btn" data-id="${session.id}">Delete</button>
+                            <button class="edit-btn" data-id="${escapeHtml(session.id)}">Edit</button>
+                            <button class="delete-btn" data-id="${escapeHtml(session.id)}">Delete</button>
                         </div>
                     </td>
                 `;
@@ -1414,7 +1443,10 @@
             });
 
             container.innerHTML = '';
-            container.appendChild(table);
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'history-table-wrap';
+            tableWrap.appendChild(table);
+            container.appendChild(tableWrap);
 
             container.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editSession(btn.dataset.id));
@@ -1511,7 +1543,8 @@
                     name: student.name,
                     sessions: studentSessions.length,
                     totalTime: formatDuration(totalMinutes),
-                    totalHours: totalHours
+                    totalHours: totalHours,
+                    totalMinutes: totalMinutes
                 });
             });
 
@@ -1541,7 +1574,7 @@ td { padding: 8px; border: 1px solid #ccc; }
             rows.forEach(row => {
                 if (row.sessions > 0) {
                     html += `<tr><td>${escapeHtml(row.name)}</td><td>${row.sessions}</td><td>${row.totalTime}</td><td>${row.totalHours}</td></tr>`;
-                    grandTotalMinutes += parseFloat(row.totalHours) * 60;
+                    grandTotalMinutes += row.totalMinutes;
                     grandTotalSessions += row.sessions;
                 }
             });
@@ -1860,16 +1893,30 @@ td { padding: 8px; border: 1px solid #ccc; }
         }
 
         function openModal(title, message, onConfirm) {
+            modalPreviousFocus = document.activeElement;
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').textContent = message;
             modalCallback = onConfirm;
-            document.getElementById('modalOverlay').classList.add('open');
+
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.add('open');
+            document.getElementById('modalCancel').focus();
         }
 
         function closeModal() {
             document.getElementById('modalOverlay').classList.remove('open');
             modalCallback = null;
+            if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') {
+                modalPreviousFocus.focus();
+            }
+            modalPreviousFocus = null;
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('modalOverlay').classList.contains('open')) {
+                closeModal();
+            }
+        });
 
         // ===================== START =====================
         init();
