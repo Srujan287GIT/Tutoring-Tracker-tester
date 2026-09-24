@@ -1,5 +1,4 @@
 const CACHE_NAME = 'tutor-tracker-v3';
-
 const FILES_TO_CACHE = [
     './',
     './index.html',
@@ -12,7 +11,7 @@ const FILES_TO_CACHE = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(FILES_TO_CACHE))
+            .then(cache => cache.addAll(FILES_TO_CACHE))
             .then(() => self.skipWaiting())
     );
 });
@@ -20,48 +19,41 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keyList) => Promise.all(
-            keyList.map((key) => {
-                if (key !== CACHE_NAME) {
-                    return caches.delete(key);
-                }
-                return undefined;
-            })
+            keyList.map((key) => key !== CACHE_NAME ? caches.delete(key) : undefined)
         )).then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', (event) => {
-    const request = event.request;
-    if (request.method !== 'GET') return;
+    if (event.request.method !== 'GET') return;
 
-    const url = new URL(request.url);
-    const isNavigation = request.mode === 'navigate';
-    const isAppShell = isNavigation || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
-
-    if (isAppShell) {
-        // Network-first keeps deployed updates visible while preserving offline use.
+    const isNavigation = event.request.mode === 'navigate';
+    if (isNavigation) {
         event.respondWith(
-            fetch(request)
+            fetch(event.request)
                 .then((response) => {
                     if (response && response.ok) {
                         const copy = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
                     }
                     return response;
                 })
-                .catch(() => caches.match(request).then((cached) => cached || caches.match('./index.html')))
+                .catch(() =>
+                    caches.match(event.request).then(response =>
+                        response || caches.match('./index.html')
+                    )
+                )
         );
         return;
     }
 
-    // Static assets use cache-first, with a network fallback for first-time access.
     event.respondWith(
-        caches.match(request).then((cached) => {
+        caches.match(event.request).then((cached) => {
             if (cached) return cached;
-            return fetch(request).then((response) => {
+            return fetch(event.request).then((response) => {
                 if (response && response.ok) {
                     const copy = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
                 }
                 return response;
             });
