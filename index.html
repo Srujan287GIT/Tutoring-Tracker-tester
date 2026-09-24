@@ -2100,6 +2100,14 @@
         function buildWorksheetXml(rows, widths) {
             let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
             xml += '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+
+            // CT_Worksheet requires dimension before sheetViews, cols and sheetData.
+            if (rows.length) {
+                const lastColumn = rows.reduce((max, row) => Math.max(max, row.cells.length), 1);
+                const lastCell = `${excelColumnName(lastColumn)}${rows.length}`;
+                xml += `<dimension ref="A1:${lastCell}"/>`;
+            }
+
             xml += '<sheetViews><sheetView workbookViewId="0"/></sheetViews>';
 
             if (widths && widths.length) {
@@ -2136,13 +2144,6 @@
             });
 
             xml += '</sheetData>';
-
-            if (rows.length) {
-                const lastColumn = rows.reduce((max, row) => Math.max(max, row.cells.length), 1);
-                const lastCell = `${excelColumnName(lastColumn)}${rows.length}`;
-                xml += `<dimension ref="A1:${lastCell}"/>`;
-            }
-
             xml += '</worksheet>';
             return xml;
         }
