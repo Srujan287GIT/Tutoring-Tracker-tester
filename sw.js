@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tutor-tracker-v3';
+const CACHE_NAME = 'tutor-tracker-v5';
 const FILES_TO_CACHE = [
     './',
     './index.html',
@@ -28,6 +28,7 @@ self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
 
     const isNavigation = event.request.mode === 'navigate';
+
     if (isNavigation) {
         event.respondWith(
             fetch(event.request)
@@ -50,6 +51,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request).then((cached) => {
             if (cached) return cached;
+
             return fetch(event.request).then((response) => {
                 if (response && response.ok) {
                     const copy = response.clone();
