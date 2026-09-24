@@ -1,0 +1,23 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><style>
+table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; width: 100%; }
+th { background: #4f8cff; color: white; font-weight: bold; padding: 10px; border: 1px solid #3a6fd6; text-align: left; }
+td { padding: 8px; border: 1px solid #ccc; }
+.total-row { background: #f0f6ff; font-weight: bold; }
+.date-col { width: 120px; }
+.time-col { width: 100px; }
+.dur-col { width: 100px; }
+</style></head>
+<body>
+<h2>Srujan — Tutoring Sessions</h2>
+<table>
+<thead>
+<tr><th class="date-col">Date</th><th class="time-col">Start Time</th><th class="time-col">End Time</th><th class="dur-col">Duration</th></tr>
+</thead>
+<tbody><tr><td>8 Sept 2026</td><td>2:00 AM</td><td>3:00 AM</td><td>1h</td></tr><tr><td>8 Sept 2026</td><td>9:50 PM</td><td>10:50 PM</td><td>1h</td></tr><tr><td>8 Sept 2026</td><td>10:05 PM</td><td>11:00 PM</td><td>55m</td></tr></tbody>
+<tfoot>
+<tr class="total-row"><td colspan="3">Total</td><td>2h 55m</td></tr>
+</tfoot>
+</table>
+<br><p style="color:#666; font-size:12px;">Exported from Tutoring Time Tracker on 9/8/2026</p>
+</body></html>
