@@ -1035,14 +1035,20 @@
         function applyTheme(theme) {
             const dark = theme === 'dark';
             document.documentElement.classList.toggle('dark', dark);
-            localStorage.setItem('tutorTracker_theme', theme);
+            try {
+                localStorage.setItem('tutorTracker_theme', theme);
+            } catch (e) {}
             document.getElementById('themeToggle').textContent = dark ? '☀️' : '🌙';
             const metaTheme = document.querySelector('meta[name="theme-color"]');
             if (metaTheme) metaTheme.setAttribute('content', dark ? '#14161b' : '#4f8cff');
         }
 
         // Apply saved theme (also set early in <head> to avoid flash)
-        applyTheme(localStorage.getItem('tutorTracker_theme') || 'light');
+        let initialTheme = 'light';
+        try {
+            initialTheme = localStorage.getItem('tutorTracker_theme') || 'light';
+        } catch (e) {}
+        applyTheme(initialTheme);
 
         // ===================== SERVICE WORKER =====================
         if ('serviceWorker' in navigator) {
@@ -1093,6 +1099,8 @@
 
         // ===================== DATA =====================
         const STORAGE_KEY = 'tutoringTracker_v1';
+        const MAX_STUDENTS = 10;
+        const MAX_SESSION_MINUTES = 12 * 60;
 
         let data = {
             students: [],
@@ -1103,6 +1111,8 @@
 
         let editingSessionId = null;
         let modalCallback = null;
+        let modalPreviousFocus = null;
+        let toastTimer = null;
         let historyViewMode = 'cycle'; // 'cycle' | 'month'
         let historyCycleFilter = 'all';
         let historyMonthFilter = 'all';
@@ -1190,7 +1200,7 @@
                     return;
                 }
                 const student = {
-                    id: 's_' + Date.now(),
+                    id: makeId('s_'),
                     name: trimmed
                 };
                 data.students.push(student);
@@ -1312,6 +1322,14 @@
                 applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
             });
             document.getElementById('sessionForm').addEventListener('submit', handleSaveSession);
+            document.getElementById('studentSelect').addEventListener('change', (e) => {
+                data.selectedStudentId = e.target.value || null;
+                historyCycleFilter = 'all';
+                historyMonthFilter = 'all';
+                saveData();
+                renderStudents();
+                renderHistory();
+            });
             document.getElementById('currentTimeBtn').addEventListener('click', useCurrentTime);
             document.getElementById('summaryMonth').addEventListener('change', renderSummary);
             document.getElementById('prevMonth').addEventListener('click', () => shiftMonth(-1));
@@ -1347,17 +1365,27 @@
 
         function useCurrentTime() {
             const now = new Date();
-            const h24 = now.getHours();
-            const m = now.getMinutes();
-            let h = h24 % 12;
-            if (h === 0) h = 12;
-            const ampm = h24 >= 12 ? 'PM' : 'AM';
-            const roundedM = Math.round(m / 5) * 5;
-            const mStr = String(roundedM === 60 ? 0 : roundedM).padStart(2, '0');
-            document.getElementById('startHour').value = h;
-            document.getElementById('startMinute').value = mStr;
-            document.getElementById('startAmPm').value = ampm;
+            now.setSeconds(0, 0);
+
+            const roundedMinutes = Math.round(now.getMinutes() / 5) * 5;
+            if (roundedMinutes === 60) {
+                now.setHours(now.getHours() + 1);
+                now.setMinutes(0);
+            } else {
+                now.setMinutes(roundedMinutes);
+            }
+
+            const hourText = String(now.getHours()).padStart(2, '0');
+            const minuteText = String(now.getMinutes()).padStart(2, '0');
+
+            setTimeValue(
+                hourText + ':' + minuteText,
+                'startHour',
+                'startMinute',
+                'startAmPm'
+            );
             document.getElementById('sessionDate').value = formatDateForInput(now);
+            clearErrors();
             showToast('Current time set as start time');
         }
 
@@ -1393,16 +1421,18 @@
 
             const start = parseTime(startTime);
             const end = parseTime(endTime);
-            let durationMinutes = (end.hours * 60 + end.minutes) - (start.hours * 60 + start.minutes);
+            const startTotalMinutes = start.hours * 60 + start.minutes;
+            const endTotalMinutes = end.hours * 60 + end.minutes;
 
-            if (durationMinutes < 0) {
-                durationMinutes += 24 * 60;
-            }
-
-            if (durationMinutes === 0) {
-                document.getElementById('endError').textContent = 'End time must be after start time.';
+            if (endTotalMinutes <= startTotalMinutes) {
+                document.getElementById('endError').textContent =
+                    endTotalMinutes === startTotalMinutes
+                        ? 'End time must be after start time.'
+                        : 'End time cannot be earlier than start time. Overnight sessions are not allowed.';
                 return;
             }
+
+            const durationMinutes = endTotalMinutes - startTotalMinutes;
 
             if (durationMinutes > 12 * 60) {
                 document.getElementById('endError').textContent = 'Session cannot be longer than 12 hours.';
@@ -1410,7 +1440,7 @@
             }
 
             const session = {
-                id: editingSessionId || 'sess_' + Date.now(),
+                id: editingSessionId || makeId('sess_'),
                 studentId,
                 date,
                 startTime,
@@ -1570,7 +1600,7 @@
             }
 
             data.fees.push({
-                id: 'fee_' + Date.now(),
+                id: makeId('fee_'),
                 studentId: data.selectedStudentId,
                 date: dateVal
             });
@@ -1853,7 +1883,9 @@
             if (!session) return;
 
             editingSessionId = sessionId;
+            data.selectedStudentId = session.studentId;
             document.getElementById('studentSelect').value = session.studentId;
+            renderStudents();
             document.getElementById('sessionDate').value = session.date;
             setTimeValue(session.startTime, 'startHour', 'startMinute', 'startAmPm');
             setTimeValue(session.endTime, 'endHour', 'endMinute', 'endAmPm');
