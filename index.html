@@ -19,8 +19,8 @@
     </script>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
 
     <title>Tutoring Time Tracker</title>
     <style>
@@ -148,6 +148,13 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-hint {
+            font-size: 0.78rem;
+            font-weight: 400;
+            color: var(--text-light);
         }
 
         /* Install banner */
@@ -378,11 +385,6 @@
             width: auto;
         }
 
-        .btn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
-
         .btn-group {
             display: flex;
             gap: 10px;
@@ -407,6 +409,14 @@
             padding: 16px;
             text-align: center;
             border: 1px solid #d6e4fd;
+            cursor: pointer;
+            transition: all 0.15s;
+            touch-action: manipulation;
+        }
+
+        .summary-card:hover, .summary-card:active {
+            border-color: var(--accent);
+            transform: translateY(-1px);
         }
 
         .summary-card .name {
@@ -428,16 +438,109 @@
             margin-top: 2px;
         }
 
-        /* History Table */
-        .history-table-wrap {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        /* View tabs (Fee cycles / Months) */
+        .view-tabs {
+            display: flex;
+            gap: 8px;
         }
 
+        .view-tab {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            touch-action: manipulation;
+            transition: all 0.15s;
+        }
+
+        .view-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* Fee section */
+        .fee-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .fee-add-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .fee-add-row input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .fee-add-row .btn {
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .fee-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .fee-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .fee-item .fee-date {
+            font-weight: 600;
+        }
+
+        .fee-item .fee-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .fee-item .fee-actions button {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+            touch-action: manipulation;
+        }
+
+        .fee-edit {
+            background: #e8f0fe;
+            color: var(--accent);
+        }
+
+        .fee-delete {
+            background: #ffeaea;
+            color: var(--danger);
+        }
+
+        /* History Table */
         .history-table {
             width: 100%;
-            min-width: 560px;
             border-collapse: collapse;
             font-size: 0.95rem;
         }
@@ -516,9 +619,7 @@
             opacity: 0;
             transition: all 0.3s ease;
             z-index: 1000;
-            white-space: normal;
-            text-align: center;
-            width: max-content;
+            white-space: nowrap;
             max-width: 90vw;
         }
 
@@ -634,145 +735,6 @@
             color: var(--accent);
         }
 
-        /* Fee-cycle history */
-        .history-view-selector {
-            margin-bottom: 16px;
-        }
-
-        .history-view-selector select {
-            max-width: 260px;
-        }
-
-        .fee-management {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            background: var(--bg);
-        }
-
-        .fee-management-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .fee-input-row {
-            display: flex;
-            gap: 10px;
-            align-items: end;
-            margin-bottom: 12px;
-        }
-
-        .fee-input-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        .fee-input-row .btn {
-            flex: 0 0 auto;
-            width: auto;
-            white-space: nowrap;
-        }
-
-        .fee-payment-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .fee-payment-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--card);
-        }
-
-        .fee-payment-date {
-            font-weight: 600;
-        }
-
-        .fee-payment-note {
-            color: var(--text-light);
-            font-size: 0.82rem;
-            margin-top: 2px;
-        }
-
-        .fee-cycle-card {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 14px;
-            background: var(--card);
-        }
-
-        .fee-cycle-card.current {
-            border-color: var(--accent);
-        }
-
-        .fee-cycle-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-
-        .fee-cycle-title {
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        .fee-cycle-meta {
-            color: var(--text-light);
-            font-size: 0.85rem;
-            margin-top: 3px;
-        }
-
-        .fee-cycle-total {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border);
-            font-weight: 700;
-        }
-
-        .fee-cycle-badge {
-            display: inline-block;
-            margin-left: 6px;
-            padding: 3px 7px;
-            border-radius: 999px;
-            background: var(--accent);
-            color: #fff;
-            font-size: 0.72rem;
-            font-weight: 700;
-            vertical-align: middle;
-        }
-
-        .before-fee-card {
-            border-style: dashed;
-        }
-
-        @media (max-width: 600px) {
-            .fee-input-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .fee-input-row .btn {
-                width: 100%;
-            }
-
-            .fee-cycle-header {
-                flex-direction: column;
-            }
-        }
-
         /* Error */
         .error-msg {
             color: var(--danger);
@@ -814,6 +776,10 @@
             border-color: #4a3a24;
         }
 
+        html.dark .summary-card:hover, html.dark .summary-card:active {
+            border-color: var(--accent);
+        }
+
         html.dark .history-table tr:hover {
             background: #232830;
         }
@@ -835,6 +801,16 @@
         html.dark .toast {
             background: #2d333e;
             color: var(--text);
+        }
+
+        html.dark .fee-edit {
+            background: #33291e;
+            color: #ffb066;
+        }
+
+        html.dark .fee-delete {
+            background: #3a2626;
+            color: #ff9a9a;
         }
 
         /* Responsive */
@@ -862,6 +838,10 @@
             }
             .install-banner p {
                 text-align: center;
+            }
+            .fee-add-row .btn {
+                padding: 12px 12px;
+                font-size: 0.85rem;
             }
         }
 
@@ -950,11 +930,11 @@
 
     <!-- Monthly Summary -->
     <section class="card">
-        <div class="card-title">📊 Monthly Summary</div>
+        <div class="card-title">📊 Monthly Summary <span class="card-hint">— tap a student to view their month sessions</span></div>
         <div class="month-selector">
-            <button id="prevMonth" aria-label="Previous month" title="Previous month">◀</button>
+            <button id="prevMonth">◀</button>
             <input type="month" id="summaryMonth">
-            <button id="nextMonth" aria-label="Next month" title="Next month">▶</button>
+            <button id="nextMonth">▶</button>
         </div>
         <div class="summary-grid" id="summaryGrid"></div>
         <div style="margin-top: 16px;">
@@ -966,29 +946,33 @@
     <section class="card">
         <div class="card-title" id="historyTitle">📋 Session History</div>
 
-        <div id="historyViewWrap" class="history-view-selector" style="display: none;">
-            <label for="historyViewSelect">View sessions by</label>
-            <select id="historyViewSelect">
-                <option value="fee">💰 Fee Cycles</option>
-                <option value="month">📅 Calendar Months</option>
-            </select>
-        </div>
-
-        <div id="feeManagementWrap" style="display: none; margin-bottom: 16px;">
-            <div class="fee-management">
-                <div class="fee-management-title">💰 Tuition Fee Tracking</div>
-                <div class="fee-input-row">
-                    <div class="form-group">
-                        <label for="feeReceivedDate">Fee received on</label>
-                        <input type="date" id="feeReceivedDate">
-                        <div class="error-msg" id="feeDateError"></div>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="recordFeeBtn">➕ Record Fee Received</button>
-                </div>
-                <div id="feePaymentList" class="fee-payment-list"></div>
+        <!-- View mode tabs -->
+        <div id="historyViewTabs" style="display: none; margin-bottom: 16px;">
+            <div class="view-tabs">
+                <button class="view-tab active" id="tabCycle" type="button">🔄 Fee cycles</button>
+                <button class="view-tab" id="tabMonth" type="button">🗓️ Months</button>
             </div>
         </div>
 
+        <!-- Fee tracking (cycle mode) -->
+        <div id="feeSection" style="display: none; margin-bottom: 16px;">
+            <div class="fee-header">
+                <span style="font-size: 0.9rem; font-weight: 600;">💰 Fees received</span>
+            </div>
+            <div class="fee-add-row">
+                <input type="date" id="newFeeDate" aria-label="New fee cycle start date">
+                <button class="btn btn-secondary btn-small" id="addFeeBtn" type="button">+ Add Fee</button>
+            </div>
+            <div id="feeDatesList"></div>
+        </div>
+
+        <!-- Cycle selector (cycle mode) -->
+        <div id="historyCycleWrap" style="display: none; margin-bottom: 16px;">
+            <label for="historyCycleSelect">Show sessions for</label>
+            <select id="historyCycleSelect"></select>
+        </div>
+
+        <!-- Month selector (month mode) -->
         <div id="historyMonthWrap" style="display: none; margin-bottom: 16px;">
             <label for="historyMonthSelect">Show sessions for</label>
             <select id="historyMonthSelect"></select>
@@ -999,13 +983,11 @@
                 <p>Select a student to view their session history.</p>
             </div>
         </div>
-
         <div style="margin-top: 16px; display: none;" id="clearAllContainer">
             <div class="btn-group">
-                <button class="btn btn-secondary" id="exportFeeCycleExcelBtn">💰 Export Current Fee Cycle</button>
-                <button class="btn btn-secondary" id="exportAllFeeCyclesBtn">📚 Export All Fee Cycles</button>
-                <button class="btn btn-secondary" id="exportStudentExcelBtn">📊 Export All Sessions</button>
-                <button class="btn btn-secondary" id="exportMonthlyStudentBtn">📅 Export Selected Month</button>
+                <button class="btn btn-secondary" id="exportStudentExcelBtn">📊 Export All (Excel)</button>
+                <button class="btn btn-secondary" id="exportCycleStudentBtn">📅 Export This Cycle (Excel)</button>
+                <button class="btn btn-secondary" id="exportMonthStudentBtn" style="display: none;">🗓️ Export This Month (Excel)</button>
                 <button class="btn btn-danger" id="clearAllBtn">🗑️ Clear All Sessions</button>
             </div>
         </div>
@@ -1015,8 +997,7 @@
     <section class="card">
         <div class="card-title">💾 Data Backup</div>
         <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px;">Use these buttons to move your data to another device or browser.</p>
-        <div class="data-actions">
-            <button class="btn btn-secondary" id="exportBtn">📤 Export Backup (JSON)</button>
+        <div class="data-actions">            <button class="btn btn-secondary" id="exportBtn">📤 Export Backup (JSON)</button>
             <button class="btn btn-secondary" id="importBtn">📥 Import Backup (JSON)</button>
             <input type="file" id="importFile" accept=".json">
         </div>
@@ -1027,7 +1008,7 @@
 
     <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMessage">
+        <div class="modal">
             <h3 id="modalTitle">Confirm</h3>
             <p id="modalMessage">Are you sure?</p>
             <div class="modal-actions">
@@ -1042,20 +1023,14 @@
         function applyTheme(theme) {
             const dark = theme === 'dark';
             document.documentElement.classList.toggle('dark', dark);
-            try {
-                localStorage.setItem('tutorTracker_theme', theme);
-            } catch (e) {}
+            localStorage.setItem('tutorTracker_theme', theme);
             document.getElementById('themeToggle').textContent = dark ? '☀️' : '🌙';
             const metaTheme = document.querySelector('meta[name="theme-color"]');
             if (metaTheme) metaTheme.setAttribute('content', dark ? '#14161b' : '#4f8cff');
         }
 
         // Apply saved theme (also set early in <head> to avoid flash)
-        let initialTheme = 'light';
-        try {
-            initialTheme = localStorage.getItem('tutorTracker_theme') || 'light';
-        } catch (e) {}
-        applyTheme(initialTheme);
+        applyTheme(localStorage.getItem('tutorTracker_theme') || 'light');
 
         // ===================== SERVICE WORKER =====================
         if ('serviceWorker' in navigator) {
@@ -1074,18 +1049,6 @@
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-
-            let recentlyDismissed = false;
-            try {
-                const hiddenDate = parseInt(localStorage.getItem('tutorTracker_hideInstallDate') || '', 10);
-                recentlyDismissed =
-                    localStorage.getItem('tutorTracker_hideInstall') === '1' &&
-                    Number.isFinite(hiddenDate) &&
-                    (Date.now() - hiddenDate) <= 7 * 24 * 60 * 60 * 1000;
-            } catch (err) {}
-
-            if (recentlyDismissed) return;
-
             deferredPrompt = e;
             installBanner.classList.add('show');
         });
@@ -1102,42 +1065,35 @@
 
         closeInstallBanner.addEventListener('click', () => {
             installBanner.classList.remove('show');
-            try {
-                localStorage.setItem('tutorTracker_hideInstall', '1');
-                localStorage.setItem('tutorTracker_hideInstallDate', String(Date.now()));
-            } catch (e) {}
+            localStorage.setItem('tutorTracker_hideInstall', '1');
+            localStorage.setItem('tutorTracker_hideInstallDate', String(Date.now()));
         });
 
-        // Show banner again after 7 days if dismissed.
-        try {
-            if (localStorage.getItem('tutorTracker_hideInstall') === '1') {
-                const hiddenDate = localStorage.getItem('tutorTracker_hideInstallDate');
-                const now = Date.now();
-                if (!hiddenDate || (now - parseInt(hiddenDate, 10)) > 7 * 24 * 60 * 60 * 1000) {
-                    localStorage.removeItem('tutorTracker_hideInstall');
-                    localStorage.removeItem('tutorTracker_hideInstallDate');
-                }
+        // Show banner again after 7 days if dismissed
+        if (localStorage.getItem('tutorTracker_hideInstall') === '1') {
+            const hiddenDate = localStorage.getItem('tutorTracker_hideInstallDate');
+            const now = Date.now();
+            if (!hiddenDate || (now - parseInt(hiddenDate)) > 7 * 24 * 60 * 60 * 1000) {
+                localStorage.removeItem('tutorTracker_hideInstall');
+                localStorage.removeItem('tutorTracker_hideInstallDate');
             }
-        } catch (e) {}
+        }
 
         // ===================== DATA =====================
         const STORAGE_KEY = 'tutoringTracker_v1';
-        const MAX_STUDENTS = 10;
-        const MAX_SESSION_MINUTES = 12 * 60;
 
         let data = {
             students: [],
             sessions: [],
-            feePayments: [],
+            fees: [],
             selectedStudentId: null
         };
 
         let editingSessionId = null;
         let modalCallback = null;
-        let modalPreviousFocus = null;
-        let toastTimer = null;
+        let historyViewMode = 'cycle'; // 'cycle' | 'month'
+        let historyCycleFilter = 'all';
         let historyMonthFilter = 'all';
-        let historyViewMode = 'fee';
 
         // ===================== INIT =====================
         function init() {
@@ -1147,7 +1103,7 @@
             populateStudentSelect();
             setDefaultDate();
             setDefaultMonth();
-            setDefaultFeeDate();
+            document.getElementById('newFeeDate').value = formatDateForInput(new Date());
             renderSummary();
             renderHistory();
             setupEventListeners();
@@ -1156,26 +1112,15 @@
         function loadData() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                if (!saved) return;
-
-                const parsed = JSON.parse(saved);
-                const validation = validateTrackerData(parsed);
-                if (!validation.valid) {
-                    console.error('Stored data is invalid:', validation.error);
-                    return;
-                }
-
-                data = {
-                    students: parsed.students,
-                    sessions: parsed.sessions,
-                    feePayments: Array.isArray(parsed.feePayments) ? parsed.feePayments : [],
-                    selectedStudentId: parsed.selectedStudentId || null
-                };
-                if (!data.students.some(s => s.id === data.selectedStudentId)) {
-                    data.selectedStudentId = null;
+                if (saved) {
+                    data = JSON.parse(saved);
                 }
             } catch (e) {
                 console.error('Failed to load data', e);
+            }
+            // Migrate: ensure fees array exists
+            if (!Array.isArray(data.fees)) {
+                data.fees = [];
             }
         }
 
@@ -1211,7 +1156,7 @@
                 grid.appendChild(btn);
             });
 
-            if (data.students.length < MAX_STUDENTS) {
+            if (data.students.length < 10) {
                 const addBtn = document.createElement('button');
                 addBtn.className = 'add-student-btn';
                 addBtn.textContent = '+ Add Student';
@@ -1221,7 +1166,7 @@
         }
 
         function addStudent() {
-            if (data.students.length >= MAX_STUDENTS) {
+            if (data.students.length >= 10) {
                 showToast('Maximum 10 students allowed.', 'error');
                 return;
             }
@@ -1233,7 +1178,7 @@
                     return;
                 }
                 const student = {
-                    id: makeId('s_'),
+                    id: 's_' + Date.now(),
                     name: trimmed
                 };
                 data.students.push(student);
@@ -1266,8 +1211,7 @@
 
         function selectStudent(id) {
             data.selectedStudentId = id;
-            historyMonthFilter = 'all';
-            historyViewMode = 'fee';
+            historyCycleFilter = 'all';
             saveData();
             renderStudents();
             populateStudentSelect();
@@ -1351,22 +1295,11 @@
             document.getElementById('summaryMonth').value = formatMonthForInput(new Date());
         }
 
-        function setDefaultFeeDate() {
-            document.getElementById('feeReceivedDate').value = formatDateForInput(new Date());
-        }
-
         function setupEventListeners() {
             document.getElementById('themeToggle').addEventListener('click', () => {
                 applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
             });
             document.getElementById('sessionForm').addEventListener('submit', handleSaveSession);
-            document.getElementById('studentSelect').addEventListener('change', (e) => {
-                data.selectedStudentId = e.target.value || null;
-                historyMonthFilter = 'all';
-                saveData();
-                renderStudents();
-                renderHistory();
-            });
             document.getElementById('currentTimeBtn').addEventListener('click', useCurrentTime);
             document.getElementById('summaryMonth').addEventListener('change', renderSummary);
             document.getElementById('prevMonth').addEventListener('click', () => shiftMonth(-1));
@@ -1375,18 +1308,19 @@
             document.getElementById('exportBtn').addEventListener('click', exportData);
             document.getElementById('exportExcelBtn').addEventListener('click', exportMonthlyExcel);
             document.getElementById('exportStudentExcelBtn').addEventListener('click', () => exportStudentExcel(null));
-            document.getElementById('exportMonthlyStudentBtn').addEventListener('click', exportStudentExcelMonthly);
-            document.getElementById('exportFeeCycleExcelBtn').addEventListener('click', exportCurrentFeeCycleExcel);
-            document.getElementById('exportAllFeeCyclesBtn').addEventListener('click', exportAllFeeCyclesExcel);
-            document.getElementById('recordFeeBtn').addEventListener('click', recordFeePayment);
-            document.getElementById('historyViewSelect').addEventListener('change', (e) => {
-                historyViewMode = e.target.value === 'month' ? 'month' : 'fee';
+            document.getElementById('exportCycleStudentBtn').addEventListener('click', exportStudentExcelCycle);
+            document.getElementById('exportMonthStudentBtn').addEventListener('click', exportStudentExcelMonth);
+            document.getElementById('historyCycleSelect').addEventListener('change', (e) => {
+                historyCycleFilter = e.target.value;
                 renderHistory();
             });
             document.getElementById('historyMonthSelect').addEventListener('change', (e) => {
                 historyMonthFilter = e.target.value;
                 renderHistory();
             });
+            document.getElementById('tabCycle').addEventListener('click', () => setViewMode('cycle'));
+            document.getElementById('tabMonth').addEventListener('click', () => setViewMode('month'));
+            document.getElementById('addFeeBtn').addEventListener('click', addFee);
             document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
             document.getElementById('importFile').addEventListener('change', importData);
             document.getElementById('modalCancel').addEventListener('click', closeModal);
@@ -1401,24 +1335,17 @@
 
         function useCurrentTime() {
             const now = new Date();
-            now.setSeconds(0, 0);
-
-            const roundedMinutes = Math.round(now.getMinutes() / 5) * 5;
-            if (roundedMinutes === 60) {
-                now.setHours(now.getHours() + 1);
-                now.setMinutes(0);
-            } else {
-                now.setMinutes(roundedMinutes);
-            }
-
-            setTimeValue(
-                `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-                'startHour',
-                'startMinute',
-                'startAmPm'
-            );
+            const h24 = now.getHours();
+            const m = now.getMinutes();
+            let h = h24 % 12;
+            if (h === 0) h = 12;
+            const ampm = h24 >= 12 ? 'PM' : 'AM';
+            const roundedM = Math.round(m / 5) * 5;
+            const mStr = String(roundedM === 60 ? 0 : roundedM).padStart(2, '0');
+            document.getElementById('startHour').value = h;
+            document.getElementById('startMinute').value = mStr;
+            document.getElementById('startAmPm').value = ampm;
             document.getElementById('sessionDate').value = formatDateForInput(now);
-            clearErrors();
             showToast('Current time set as start time');
         }
 
@@ -1454,26 +1381,24 @@
 
             const start = parseTime(startTime);
             const end = parseTime(endTime);
-            const startTotalMinutes = start.hours * 60 + start.minutes;
-            const endTotalMinutes = end.hours * 60 + end.minutes;
+            let durationMinutes = (end.hours * 60 + end.minutes) - (start.hours * 60 + start.minutes);
 
-            if (endTotalMinutes <= startTotalMinutes) {
-                document.getElementById('endError').textContent =
-                    endTotalMinutes === startTotalMinutes
-                        ? 'End time must be after start time.'
-                        : 'End time cannot be earlier than start time. Overnight sessions are not allowed.';
+            if (durationMinutes < 0) {
+                durationMinutes += 24 * 60;
+            }
+
+            if (durationMinutes === 0) {
+                document.getElementById('endError').textContent = 'End time must be after start time.';
                 return;
             }
 
-            const durationMinutes = endTotalMinutes - startTotalMinutes;
-
-            if (durationMinutes > MAX_SESSION_MINUTES) {
+            if (durationMinutes > 12 * 60) {
                 document.getElementById('endError').textContent = 'Session cannot be longer than 12 hours.';
                 return;
             }
 
             const session = {
-                id: editingSessionId || makeId('sess_'),
+                id: editingSessionId || 'sess_' + Date.now(),
                 studentId,
                 date,
                 startTime,
@@ -1536,6 +1461,16 @@
                     <div class="time">${formatDuration(totalMinutes)}</div>
                     <div class="sessions">${studentSessions.length} session${studentSessions.length !== 1 ? 's' : ''}</div>
                 `;
+                card.addEventListener('click', () => {
+                    const currentMonth = document.getElementById('summaryMonth').value;
+                    if (!currentMonth) return;
+                    historyViewMode = 'month';
+                    historyMonthFilter = currentMonth;
+                    selectStudent(student.id);
+                    setTimeout(() => {
+                        document.getElementById('historyTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 60);
+                });
                 grid.appendChild(card);
             });
         }
@@ -1550,27 +1485,152 @@
             renderSummary();
         }
 
+        // ===================== VIEW MODE =====================
+        function setViewMode(mode) {
+            historyViewMode = mode;
+            renderHistory();
+        }
+
+        // ===================== FEES =====================
+        function getStudentFees() {
+            if (!data.selectedStudentId) return [];
+            return data.fees
+                .filter(f => f.studentId === data.selectedStudentId)
+                .sort((a, b) => b.date.localeCompare(a.date)); // newest first
+        }
+
+        function renderFeeSection() {
+            const list = document.getElementById('feeDatesList');
+            const fees = getStudentFees();
+
+            if (fees.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-light); font-size: 0.85rem; margin: 0;">No fees recorded yet. Pick a date above and tap "+ Add Fee".</p>';
+                return;
+            }
+
+            list.innerHTML = '';
+            const wrap = document.createElement('div');
+            wrap.className = 'fee-list';
+
+            fees.forEach(fee => {
+                const item = document.createElement('div');
+                item.className = 'fee-item';
+
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'fee-date';
+                dateSpan.textContent = formatDateFriendly(fee.date);
+
+                const actions = document.createElement('span');
+                actions.className = 'fee-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'fee-edit';
+                editBtn.textContent = 'Edit';
+                editBtn.addEventListener('click', () => editFeeDate(fee.id));
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'fee-delete';
+                delBtn.textContent = 'Delete';
+                delBtn.addEventListener('click', () => deleteFeeDate(fee.id));
+
+                actions.appendChild(editBtn);
+                actions.appendChild(delBtn);
+                item.appendChild(dateSpan);
+                item.appendChild(actions);
+                wrap.appendChild(item);
+            });
+
+            list.appendChild(wrap);
+        }
+
+        function addFee() {
+            if (!data.selectedStudentId) return;
+            const dateVal = document.getElementById('newFeeDate').value;
+
+            if (!dateVal) {
+                showToast('Please choose a fee cycle start date first.', 'error');
+                return;
+            }
+
+            if (data.fees.some(f => f.studentId === data.selectedStudentId && f.date === dateVal)) {
+                showToast('A fee is already recorded on that date.', 'error');
+                return;
+            }
+
+            data.fees.push({
+                id: 'fee_' + Date.now(),
+                studentId: data.selectedStudentId,
+                date: dateVal
+            });
+            saveData();
+            document.getElementById('newFeeDate').value = formatDateForInput(new Date());
+            renderHistory();
+            showToast(`Fee added — ${formatDateFriendly(dateVal)}`);
+        }
+
+        function editFeeDate(feeId) {
+            const fee = data.fees.find(f => f.id === feeId);
+            if (!fee) return;
+
+            const input = prompt('Edit fee cycle start date (YYYY-MM-DD):', fee.date);
+            if (!input) return;
+
+            const trimmed = input.trim();
+            const parsed = new Date(trimmed + 'T00:00:00');
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed) || isNaN(parsed.getTime())) {
+                showToast('Invalid date. Use YYYY-MM-DD format.', 'error');
+                return;
+            }
+
+            if (data.fees.some(f => f.id !== feeId && f.studentId === fee.studentId && f.date === trimmed)) {
+                showToast('A fee is already recorded on that date.', 'error');
+                return;
+            }
+
+            fee.date = trimmed;
+            saveData();
+            renderHistory();
+            showToast('Fee date updated');
+        }
+
+        function deleteFeeDate(feeId) {
+            const fee = data.fees.find(f => f.id === feeId);
+            if (!fee) return;
+
+            openModal(
+                'Delete Fee Date',
+                `Remove fee received on ${formatDateFriendly(fee.date)}? Sessions stay — only the cycle boundary is removed.`,
+                () => {
+                    data.fees = data.fees.filter(f => f.id !== feeId);
+                    saveData();
+                    renderHistory();
+                    showToast('Fee date deleted');
+                }
+            );
+        }
+
         // ===================== HISTORY =====================
         function renderHistory() {
             const container = document.getElementById('historyContainer');
             const title = document.getElementById('historyTitle');
             const clearContainer = document.getElementById('clearAllContainer');
+            const cycleWrap = document.getElementById('historyCycleWrap');
             const monthWrap = document.getElementById('historyMonthWrap');
-            const viewWrap = document.getElementById('historyViewWrap');
-            const feeWrap = document.getElementById('feeManagementWrap');
-            const viewSelect = document.getElementById('historyViewSelect');
+            const feeSection = document.getElementById('feeSection');
+            const tabs = document.getElementById('historyViewTabs');
 
             if (!data.selectedStudentId) {
                 title.textContent = '📋 Session History';
-                viewWrap.style.display = 'none';
-                feeWrap.style.display = 'none';
+                tabs.style.display = 'none';
+                cycleWrap.style.display = 'none';
                 monthWrap.style.display = 'none';
-                clearContainer.style.display = 'none';
+                feeSection.style.display = 'none';
                 container.innerHTML = `
                     <div class="empty-state">
                         <p>Select a student to view their session history.</p>
                     </div>
                 `;
+                clearContainer.style.display = 'none';
                 return;
             }
 
@@ -1582,87 +1642,63 @@
             }
 
             title.textContent = `📋 ${escapeHtml(student.name)}'s Sessions`;
-            viewWrap.style.display = 'block';
-            feeWrap.style.display = 'block';
-            clearContainer.style.display = 'block';
-            viewSelect.value = historyViewMode;
-            populateFeePaymentList();
+            tabs.style.display = 'block';
+            document.getElementById('tabCycle').classList.toggle('active', historyViewMode === 'cycle');
+            document.getElementById('tabMonth').classList.toggle('active', historyViewMode === 'month');
 
-            if (historyViewMode === 'fee') {
-                monthWrap.style.display = 'none';
-                renderFeeCycleHistory(student, container);
-                return;
-            }
-
-            monthWrap.style.display = 'block';
-            const sessions = getStudentSessionsSorted(student.id, true);
+            const sessions = data.sessions
+                .filter(s => s.studentId === data.selectedStudentId)
+                .sort((a, b) => new Date(b.date + 'T' + b.startTime) - new Date(a.date + 'T' + a.startTime));
 
             if (sessions.length === 0) {
+                feeSection.style.display = 'none';
+                cycleWrap.style.display = 'none';
                 monthWrap.style.display = 'none';
                 container.innerHTML = `
                     <div class="empty-state">
                         <p>No sessions recorded yet.</p>
                     </div>
                 `;
+                clearContainer.style.display = 'none';
                 return;
             }
 
-            populateHistoryMonthFilter(sessions);
+            clearContainer.style.display = 'block';
+            document.getElementById('exportCycleStudentBtn').style.display = historyViewMode === 'cycle' ? '' : 'none';
+            document.getElementById('exportMonthStudentBtn').style.display = historyViewMode === 'month' ? '' : 'none';
 
-            const displaySessions = historyMonthFilter === 'all'
-                ? sessions
-                : sessions.filter(s => s.date.slice(0, 7) === historyMonthFilter);
+            let displaySessions;
+            let activeSelect;
+
+            if (historyViewMode === 'cycle') {
+                feeSection.style.display = 'block';
+                cycleWrap.style.display = 'block';
+                monthWrap.style.display = 'none';
+                renderFeeSection();
+                populateHistoryCycleFilter(sessions);
+                displaySessions = filterSessionsByCycle(sessions);
+                activeSelect = document.getElementById('historyCycleSelect');
+            } else {
+                feeSection.style.display = 'none';
+                cycleWrap.style.display = 'none';
+                monthWrap.style.display = 'block';
+                populateHistoryMonthFilter(sessions);
+                displaySessions = historyMonthFilter === 'all'
+                    ? sessions
+                    : sessions.filter(s => s.date.slice(0, 7) === historyMonthFilter);
+                activeSelect = document.getElementById('historyMonthSelect');
+            }
 
             if (displaySessions.length === 0) {
-                const [y, mo] = historyMonthFilter.split('-').map(Number);
-                const label = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const label = activeSelect.options[activeSelect.selectedIndex] ? activeSelect.options[activeSelect.selectedIndex].textContent : 'this selection';
                 container.innerHTML = `
                     <div class="empty-state">
-                        <p>No sessions recorded for ${label}.</p>
+                        <p>No sessions recorded for ${escapeHtml(label)}.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = '';
-            container.appendChild(buildSessionTable(displaySessions));
-        }
-
-        function getStudentSessionsSorted(studentId, newestFirst = true) {
-            return data.sessions
-                .filter(s => s.studentId === studentId)
-                .sort((a, b) => {
-                    const dateCompare = a.date.localeCompare(b.date);
-                    if (dateCompare !== 0) return newestFirst ? -dateCompare : dateCompare;
-                    const timeCompare = a.startTime.localeCompare(b.startTime);
-                    return newestFirst ? -timeCompare : timeCompare;
-                });
-        }
-
-        function populateHistoryMonthFilter(sessions) {
-            const sel = document.getElementById('historyMonthSelect');
-            const months = [...new Set(sessions.map(s => s.date.slice(0, 7)))].sort().reverse();
-            sel.innerHTML = '';
-            const allOpt = document.createElement('option');
-            allOpt.value = 'all';
-            allOpt.textContent = 'All months';
-            sel.appendChild(allOpt);
-            months.forEach(m => {
-                const [y, mo] = m.split('-').map(Number);
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.textContent = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                sel.appendChild(opt);
-            });
-            if (historyMonthFilter !== 'all' && months.includes(historyMonthFilter)) {
-                sel.value = historyMonthFilter;
-            } else {
-                sel.value = 'all';
-                historyMonthFilter = 'all';
-            }
-        }
-
-        function buildSessionTable(displaySessions) {
             const table = document.createElement('table');
             table.className = 'history-table';
             table.innerHTML = `
@@ -1688,282 +1724,124 @@
                     <td>${formatDuration(session.durationMinutes)}</td>
                     <td>
                         <div class="actions">
-                            <button class="edit-btn" data-id="${escapeHtml(session.id)}">Edit</button>
-                            <button class="delete-btn" data-id="${escapeHtml(session.id)}">Delete</button>
+                            <button class="edit-btn" data-id="${session.id}">Edit</button>
+                            <button class="delete-btn" data-id="${session.id}">Delete</button>
                         </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            const tableWrap = document.createElement('div');
-            tableWrap.className = 'history-table-wrap';
-            tableWrap.appendChild(table);
+            container.innerHTML = '';
+            container.appendChild(table);
 
-            tableWrap.querySelectorAll('.edit-btn').forEach(btn => {
+            container.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editSession(btn.dataset.id));
             });
-            tableWrap.querySelectorAll('.delete-btn').forEach(btn => {
+            container.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => confirmDeleteSession(btn.dataset.id));
             });
-
-            return tableWrap;
         }
 
-        function getFeeCyclesForStudent(studentId) {
-            const payments = data.feePayments
-                .filter(p => p.studentId === studentId)
-                .sort((a, b) => a.date.localeCompare(b.date));
+        function populateHistoryCycleFilter(sessions) {
+            const sel = document.getElementById('historyCycleSelect');
+            const feesAsc = getStudentFees().map(f => f.date).sort(); // oldest first
+            sel.innerHTML = '';
 
-            return payments.map((payment, index) => {
-                const nextPayment = payments[index + 1] || null;
-                const endDate = nextPayment ? addDaysToDateString(nextPayment.date, -1) : null;
-                const startDay = dateStringToDayNumber(payment.date);
-                const endDay = endDate ? dateStringToDayNumber(endDate) : Number.POSITIVE_INFINITY;
+            const allOpt = document.createElement('option');
+            allOpt.value = 'all';
+            allOpt.textContent = 'All sessions';
+            sel.appendChild(allOpt);
 
-                const sessions = data.sessions
-                    .filter(s => {
-                        if (s.studentId !== studentId) return false;
-                        const day = dateStringToDayNumber(s.date);
-                        return day >= startDay && day <= endDay;
-                    })
-                    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
-
-                return {
-                    paymentId: payment.id,
-                    startDate: payment.date,
-                    endDate,
-                    nextPaymentDate: nextPayment ? nextPayment.date : null,
-                    sessions,
-                    totalMinutes: sessions.reduce((sum, s) => sum + s.durationMinutes, 0)
-                };
-            }).sort((a, b) => b.startDate.localeCompare(a.startDate));
-        }
-
-        function renderFeeCycleHistory(student, container) {
-            const cycles = getFeeCyclesForStudent(student.id);
-            container.innerHTML = '';
-
-            if (cycles.length === 0) {
-                const studentSessions = getStudentSessionsSorted(student.id, false);
-                const message = document.createElement('div');
-                message.className = 'empty-state';
-                message.innerHTML = `
-                    <p>No fee received date has been recorded yet.</p>
-                    <p style="margin-top: 6px;">Record the first payment date above to start fee-cycle tracking.</p>
-                `;
-                container.appendChild(message);
-
-                if (studentSessions.length > 0) {
-                    const beforeCard = document.createElement('div');
-                    beforeCard.className = 'fee-cycle-card before-fee-card';
-                    beforeCard.innerHTML = `
-                        <div class="fee-cycle-title">Sessions Before First Fee</div>
-                        <div class="fee-cycle-meta">These sessions predate the first recorded fee and are kept separately.</div>
-                    `;
-                    beforeCard.appendChild(buildSessionTable(studentSessions));
-                    container.appendChild(beforeCard);
+            const cycles = [];
+            for (let i = 0; i < feesAsc.length; i++) {
+                const start = feesAsc[i];
+                const next = feesAsc[i + 1] || null;
+                const endLabel = next ? formatDateShort(addDays(next, -1)) : 'Present';
+                const inCycle = sessions.filter(s => s.date >= start && (next ? s.date < next : true));
+                const total = inCycle.reduce((sum, s) => sum + s.durationMinutes, 0);
+                let label = `${formatDateShort(start)} → ${endLabel}`;
+                if (inCycle.length > 0) {
+                    label += ` — ${formatDuration(total)}`;
                 }
-                return;
+                cycles.push({ value: String(i), label });
+            }
+            cycles.reverse(); // newest cycle first
+
+            if (feesAsc.length > 0 && sessions.some(s => s.date < feesAsc[0])) {
+                cycles.push({ value: 'before', label: `Before ${formatDateShort(feesAsc[0])}` });
             }
 
-            const firstStartDate = cycles[cycles.length - 1].startDate;
-            const beforeFirstDay = dateStringToDayNumber(firstStartDate);
-            const beforeFirstSessions = data.sessions
-                .filter(s =>
-                    s.studentId === student.id &&
-                    dateStringToDayNumber(s.date) < beforeFirstDay
-                )
-                .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
-
-            cycles.forEach((cycle, index) => {
-                const card = document.createElement('div');
-                card.className = 'fee-cycle-card' + (index === 0 ? ' current' : '');
-
-                const title = cycle.endDate
-                    ? `Fee Cycle: ${formatDateFriendly(cycle.startDate)} – ${formatDateFriendly(cycle.endDate)}`
-                    : `Fee Cycle: ${formatDateFriendly(cycle.startDate)} – Until Next Fee Received`;
-
-                const nextLabel = cycle.nextPaymentDate
-                    ? formatDateFriendly(cycle.nextPaymentDate)
-                    : 'Not yet recorded';
-
-                card.innerHTML = `
-                    <div class="fee-cycle-header">
-                        <div>
-                            <div class="fee-cycle-title">
-                                ${title}
-                                ${index === 0 ? '<span class="fee-cycle-badge">Current</span>' : ''}
-                            </div>
-                            <div class="fee-cycle-meta">
-                                Fee received: ${formatDateFriendly(cycle.startDate)} · Next fee: ${nextLabel}
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-secondary btn-small cycle-export-btn" data-id="${escapeHtml(cycle.paymentId)}">
-                            📊 Export Cycle
-                        </button>
-                    </div>
-                `;
-
-                if (cycle.sessions.length > 0) {
-                    card.appendChild(buildSessionTable(cycle.sessions));
-                } else {
-                    const empty = document.createElement('div');
-                    empty.className = 'empty-state';
-                    empty.innerHTML = '<p>No sessions recorded in this fee cycle.</p>';
-                    card.appendChild(empty);
-                }
-
-                const total = document.createElement('div');
-                total.className = 'fee-cycle-total';
-                total.innerHTML = `
-                    <span>${cycle.sessions.length} session${cycle.sessions.length !== 1 ? 's' : ''}</span>
-                    <span>Total: ${formatDuration(cycle.totalMinutes)}</span>
-                `;
-                card.appendChild(total);
-
-                const exportBtn = card.querySelector('.cycle-export-btn');
-                if (exportBtn && cycle.sessions.length > 0) {
-                    exportBtn.addEventListener('click', () => exportStudentFeeCycleExcel(cycle.paymentId));
-                } else if (exportBtn) {
-                    exportBtn.remove();
-                }
-
-                container.appendChild(card);
+            cycles.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.value;
+                opt.textContent = c.label;
+                sel.appendChild(opt);
             });
 
-            if (beforeFirstSessions.length > 0) {
-                const beforeCard = document.createElement('div');
-                beforeCard.className = 'fee-cycle-card before-fee-card';
-                beforeCard.innerHTML = `
-                    <div class="fee-cycle-title">Sessions Before First Fee</div>
-                    <div class="fee-cycle-meta">These sessions predate the first recorded fee and are kept separately.</div>
-                `;
-                beforeCard.appendChild(buildSessionTable(beforeFirstSessions));
-                container.appendChild(beforeCard);
+            const validValues = ['all', 'before', ...feesAsc.map((_, i) => String(i))];
+            if (validValues.includes(historyCycleFilter)) {
+                sel.value = historyCycleFilter;
+            } else {
+                sel.value = 'all';
+                historyCycleFilter = 'all';
             }
         }
 
-        function populateFeePaymentList() {
-            const list = document.getElementById('feePaymentList');
-            const payments = data.feePayments
-                .filter(p => p.studentId === data.selectedStudentId)
-                .sort((a, b) => b.date.localeCompare(a.date));
+        function populateHistoryMonthFilter(sessions) {
+            const sel = document.getElementById('historyMonthSelect');
+            let months = [...new Set(sessions.map(s => s.date.slice(0, 7)))].sort().reverse();
 
-            list.innerHTML = '';
-
-            if (payments.length === 0) {
-                list.innerHTML = '<div class="fee-payment-note">No fee dates recorded yet. The first recorded date will start the first fee cycle.</div>';
-                return;
+            // Keep a requested month visible even if it has no sessions (e.g. tapped from Monthly Summary)
+            if (historyMonthFilter !== 'all' && /^\d{4}-\d{2}$/.test(historyMonthFilter) && !months.includes(historyMonthFilter)) {
+                months = [...months, historyMonthFilter].sort().reverse();
             }
 
-            const heading = document.createElement('div');
-            heading.className = 'fee-payment-note';
-            heading.textContent = 'Recorded fee receipts (newest first):';
-            list.appendChild(heading);
+            sel.innerHTML = '';
+            const allOpt = document.createElement('option');
+            allOpt.value = 'all';
+            allOpt.textContent = 'All months';
+            sel.appendChild(allOpt);
 
-            payments.forEach(payment => {
-                const item = document.createElement('div');
-                item.className = 'fee-payment-item';
-                item.innerHTML = `
-                    <div>
-                        <div class="fee-payment-date">${formatDateFriendly(payment.date)}</div>
-                        <div class="fee-payment-note">Received fee — this date starts a new cycle</div>
-                    </div>
-                    <button type="button" class="btn btn-danger btn-small delete-fee-btn" data-id="${escapeHtml(payment.id)}">Delete</button>
-                `;
-                item.querySelector('.delete-fee-btn').addEventListener('click', () => confirmDeleteFeePayment(payment.id));
-                list.appendChild(item);
-            });
-        }
-
-        function recordFeePayment() {
-            if (!data.selectedStudentId) {
-                showToast('Please select a student first.', 'error');
-                return;
-            }
-
-            const input = document.getElementById('feeReceivedDate');
-            const error = document.getElementById('feeDateError');
-            const date = input.value;
-            error.textContent = '';
-            input.classList.remove('input-error');
-
-            if (!isValidDateString(date)) {
-                error.textContent = 'Please choose a valid fee received date.';
-                input.classList.add('input-error');
-                return;
-            }
-
-            const today = formatDateForInput(new Date());
-            if (date > today) {
-                error.textContent = 'A fee received date cannot be in the future.';
-                input.classList.add('input-error');
-                return;
-            }
-
-            const duplicate = data.feePayments.some(
-                p => p.studentId === data.selectedStudentId && p.date === date
-            );
-            if (duplicate) {
-                error.textContent = 'A fee received record already exists for this date.';
-                input.classList.add('input-error');
-                return;
-            }
-
-            data.feePayments.push({
-                id: makeId('fee_'),
-                studentId: data.selectedStudentId,
-                date
+            months.forEach(m => {
+                const [y, mo] = m.split('-').map(Number);
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                sel.appendChild(opt);
             });
 
-            saveData();
-            renderHistory();
-            input.value = formatDateForInput(new Date());
-            showToast(`Fee received on ${formatDateFriendly(date)} — new fee cycle recorded`);
+            if (historyMonthFilter !== 'all' && months.includes(historyMonthFilter)) {
+                sel.value = historyMonthFilter;
+            } else {
+                sel.value = 'all';
+                historyMonthFilter = 'all';
+            }
         }
 
-        function confirmDeleteFeePayment(paymentId) {
-            const payment = data.feePayments.find(p => p.id === paymentId);
-            if (!payment) return;
+        function filterSessionsByCycle(sessions) {
+            if (historyCycleFilter === 'all') return sessions;
 
-            openModal(
-                'Delete Fee Record',
-                `Delete the fee received record for ${formatDateFriendly(payment.date)}? Sessions will stay safe, but fee-cycle boundaries will be recalculated.`,
-                () => {
-                    data.feePayments = data.feePayments.filter(p => p.id !== paymentId);
-                    saveData();
-                    renderHistory();
-                    showToast('Fee record deleted; fee cycles recalculated');
-                }
-            );
+            const feesAsc = getStudentFees().map(f => f.date).sort();
+
+            if (historyCycleFilter === 'before') {
+                return feesAsc.length ? sessions.filter(s => s.date < feesAsc[0]) : sessions;
+            }
+
+            const i = parseInt(historyCycleFilter, 10);
+            if (isNaN(i) || i < 0 || i >= feesAsc.length) return sessions;
+
+            const start = feesAsc[i];
+            const next = feesAsc[i + 1] || null;
+            return sessions.filter(s => s.date >= start && (next ? s.date < next : true));
         }
 
-        function dateStringToDayNumber(dateStr) {
-            const [year, month, day] = dateStr.split('-').map(Number);
-            return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
-        }
-
-        function addDaysToDateString(dateStr, days) {
-            const [year, month, day] = dateStr.split('-').map(Number);
-            const date = new Date(Date.UTC(year, month - 1, day));
-            date.setUTCDate(date.getUTCDate() + days);
-            return formatDateForInputUTC(date);
-        }
-
-        function formatDateForInputUTC(date) {
-            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-        }
-
-                function editSession(sessionId) {
+        function editSession(sessionId) {
             const session = data.sessions.find(s => s.id === sessionId);
             if (!session) return;
 
             editingSessionId = sessionId;
-            data.selectedStudentId = session.studentId;
-            historyMonthFilter = 'all';
             document.getElementById('studentSelect').value = session.studentId;
-            renderStudents();
             document.getElementById('sessionDate').value = session.date;
             setTimeValue(session.startTime, 'startHour', 'startMinute', 'startAmPm');
             setTimeValue(session.endTime, 'endHour', 'endMinute', 'endAmPm');
@@ -1999,307 +1877,6 @@
             );
         }
 
-        // ===================== NATIVE XLSX EXPORT =====================
-        function escapeXml(text) {
-            const cleaned = Array.from(String(text ?? ''))
-                .filter(character => {
-                    const code = character.charCodeAt(0);
-                    return code === 9 || code === 10 || code === 13 || code >= 32;
-                })
-                .join('');
-
-            return cleaned
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
-        }
-
-        function excelColumnName(columnNumber) {
-            let name = '';
-            let n = columnNumber;
-            while (n > 0) {
-                const remainder = (n - 1) % 26;
-                name = String.fromCharCode(65 + remainder) + name;
-                n = Math.floor((n - 1) / 26);
-            }
-            return name;
-        }
-
-        function sanitizeSheetName(name) {
-            return String(name || 'Sheet1')
-                .replace(/[\\\\\\/:*?\[\]]/g, '')
-                .slice(0, 31) || 'Sheet1';
-        }
-
-        function bytesToUint32(value) {
-            return new Uint8Array([
-                value & 0xff,
-                (value >>> 8) & 0xff,
-                (value >>> 16) & 0xff,
-                (value >>> 24) & 0xff
-            ]);
-        }
-
-        function bytesToUint16(value) {
-            return new Uint8Array([
-                value & 0xff,
-                (value >>> 8) & 0xff
-            ]);
-        }
-
-        function crc32(bytes) {
-            let crc = 0xffffffff;
-            for (let i = 0; i < bytes.length; i++) {
-                crc ^= bytes[i];
-                for (let bit = 0; bit < 8; bit++) {
-                    crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
-                }
-            }
-            return (crc ^ 0xffffffff) >>> 0;
-        }
-
-        function concatUint8Arrays(parts) {
-            const total = parts.reduce((sum, part) => sum + part.length, 0);
-            const result = new Uint8Array(total);
-            let offset = 0;
-            parts.forEach(part => {
-                result.set(part, offset);
-                offset += part.length;
-            });
-            return result;
-        }
-
-        function createZipArchive(files) {
-            const encoder = new TextEncoder();
-            const localParts = [];
-            const centralParts = [];
-            let offset = 0;
-
-            files.forEach(file => {
-                const name = encoder.encode(file.name);
-                const content = encoder.encode(file.content);
-                const checksum = crc32(content);
-
-                const localHeader = concatUint8Arrays([
-                    new Uint8Array([0x50,0x4b,0x03,0x04]),
-                    bytesToUint16(20),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint32(checksum),
-                    bytesToUint32(content.length),
-                    bytesToUint32(content.length),
-                    bytesToUint16(name.length),
-                    bytesToUint16(0)
-                ]);
-
-                localParts.push(localHeader, name, content);
-
-                const centralHeader = concatUint8Arrays([
-                    new Uint8Array([0x50,0x4b,0x01,0x02]),
-                    bytesToUint16(20),
-                    bytesToUint16(20),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint32(checksum),
-                    bytesToUint32(content.length),
-                    bytesToUint32(content.length),
-                    bytesToUint16(name.length),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint16(0),
-                    bytesToUint32(0),
-                    bytesToUint32(offset)
-                ]);
-
-                centralParts.push(centralHeader, name);
-                offset += localHeader.length + name.length + content.length;
-            });
-
-            const localData = concatUint8Arrays(localParts);
-            const centralData = concatUint8Arrays(centralParts);
-            const endRecord = concatUint8Arrays([
-                new Uint8Array([0x50,0x4b,0x05,0x06]),
-                bytesToUint16(0),
-                bytesToUint16(0),
-                bytesToUint16(files.length),
-                bytesToUint16(files.length),
-                bytesToUint32(centralData.length),
-                bytesToUint32(localData.length),
-                bytesToUint16(0)
-            ]);
-
-            return concatUint8Arrays([localData, centralData, endRecord]);
-        }
-
-        function buildWorksheetXml(rows, widths) {
-            let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-            xml += '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
-
-            // OOXML worksheet elements follow a defined order.
-            // The dimension element must appear before sheetViews / cols / sheetData.
-            if (rows.length) {
-                const lastColumn = rows.reduce((max, row) => Math.max(max, row.cells.length), 1);
-                const lastCell = `${excelColumnName(lastColumn)}${rows.length}`;
-                xml += `<dimension ref="A1:${lastCell}"/>`;
-            }
-
-            xml += '<sheetViews><sheetView workbookViewId="0"/></sheetViews>';
-
-            if (widths && widths.length) {
-                xml += '<cols>';
-                widths.forEach((width, index) => {
-                    xml += `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`;
-                });
-                xml += '</cols>';
-            }
-
-            xml += '<sheetData>';
-
-            rows.forEach((row, rowIndex) => {
-                const rowNumber = rowIndex + 1;
-                const rowStyle = row.style || '';
-                xml += `<row r="${rowNumber}">`;
-
-                row.cells.forEach((cell, columnIndex) => {
-                    const isCellObject = cell && typeof cell === 'object' && Object.prototype.hasOwnProperty.call(cell, 'value');
-                    const value = isCellObject ? cell.value : cell;
-                    const style = (isCellObject ? cell.style : '') || rowStyle;
-                    const ref = `${excelColumnName(columnIndex + 1)}${rowNumber}`;
-                    const styleAttr = style ? ` s="${style}"` : '';
-
-                    if (typeof value === 'number' && Number.isFinite(value)) {
-                        xml += `<c r="${ref}"${styleAttr}><v>${value}</v></c>`;
-                    } else {
-                        const text = escapeXml(value ?? '');
-                        xml += `<c r="${ref}" t="inlineStr"${styleAttr}><is><t xml:space="preserve">${text}</t></is></c>`;
-                    }
-                });
-
-                xml += '</row>';
-            });
-
-            xml += '</sheetData>';
-            xml += '</worksheet>';
-            return xml;
-        }
-
-        function createXlsxBlob(sheetName, rows, widths = []) {
-            const safeSheetName = sanitizeSheetName(sheetName);
-            const now = new Date().toISOString();
-
-            const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-    <Default Extension="xml" ContentType="application/xml"/>
-    <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-    <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-    <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-    <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-</Types>`;
-
-            const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-    <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-</Relationships>`;
-
-            const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-    <sheets>
-        <sheet name="${escapeXml(safeSheetName)}" sheetId="1" r:id="rId1"/>
-    </sheets>
-</workbook>`;
-
-            const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-</Relationships>`;
-
-            const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-    <fonts count="2">
-        <font><sz val="11"/><name val="Calibri"/></font>
-        <font><b/><sz val="11"/><name val="Calibri"/></font>
-    </fonts>
-    <fills count="3">
-        <fill><patternFill patternType="none"/></fill>
-        <fill><patternFill patternType="gray125"/></fill>
-        <fill><patternFill patternType="solid"><fgColor rgb="FFE8F0FE"/><bgColor indexed="64"/></patternFill></fill>
-    </fills>
-    <borders count="1">
-        <border><left/><right/><top/><bottom/><diagonal/></border>
-    </borders>
-    <cellStyleXfs count="1">
-        <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
-    </cellStyleXfs>
-    <cellXfs count="3">
-        <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
-        <xf numFmtId="0" fontId="1" fillId="2" borderId="0"/>
-        <xf numFmtId="0" fontId="1" fillId="2" borderId="0"/>
-    </cellXfs>
-    <cellStyles count="1">
-        <cellStyle name="Normal" xfId="0" builtinId="0"/>
-    </cellStyles>
-</styleSheet>`;
-
-            const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
-                   xmlns:dc="http://purl.org/dc/elements/1.1/"
-                   xmlns:dcterms="http://purl.org/dc/terms/"
-                   xmlns:dcmitype="http://purl.org/dc/dcmitype/"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <dc:title>${escapeXml(safeSheetName)}</dc:title>
-    <dc:creator>Tutoring Time Tracker</dc:creator>
-    <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
-</cp:coreProperties>`;
-
-            const app = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
-            xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-    <Application>Tutoring Time Tracker</Application>
-</Properties>`;
-
-            const worksheet = buildWorksheetXml(rows, widths);
-
-            const zipBytes = createZipArchive([
-                { name: '[Content_Types].xml', content: contentTypes },
-                { name: '_rels/.rels', content: rootRels },
-                { name: 'xl/workbook.xml', content: workbook },
-                { name: 'xl/_rels/workbook.xml.rels', content: workbookRels },
-                { name: 'xl/worksheets/sheet1.xml', content: worksheet },
-                { name: 'xl/styles.xml', content: styles },
-                { name: 'docProps/core.xml', content: core },
-                { name: 'docProps/app.xml', content: app }
-            ]);
-
-            return new Blob([zipBytes], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-        }
-
-        function downloadXlsx(filename, sheetName, rows, widths) {
-            const blob = createXlsxBlob(sheetName, rows, widths);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
         // ===================== MONTHLY EXCEL EXPORT =====================
         function exportMonthlyExcel() {
             const monthVal = document.getElementById('summaryMonth').value;
@@ -2309,25 +1886,21 @@
             }
 
             const [year, month] = monthVal.split('-').map(Number);
-            const monthName = new Date(year, month - 1, 1)
-                .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-            const rows = [];
+            let rows = [];
             data.students.forEach(student => {
                 const studentSessions = data.sessions.filter(s => {
                     const d = new Date(s.date + 'T00:00:00');
-                    return s.studentId === student.id &&
-                           d.getFullYear() === year &&
-                           d.getMonth() + 1 === month;
+                    return s.studentId === student.id && d.getFullYear() === year && d.getMonth() + 1 === month;
                 });
-
                 const totalMinutes = studentSessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+                const totalHours = (totalMinutes / 60).toFixed(2);
                 rows.push({
                     name: student.name,
                     sessions: studentSessions.length,
                     totalTime: formatDuration(totalMinutes),
-                    totalHours: Number((totalMinutes / 60).toFixed(2)),
-                    totalMinutes
+                    totalHours: totalHours
                 });
             });
 
@@ -2336,53 +1909,59 @@
                 return;
             }
 
-            const exportRows = [
-                { cells: [`Tutoring Report — ${monthName}`], style: '2' },
-                { cells: [] },
-                {
-                    cells: ['Student', 'Sessions', 'Total Time', 'Total Hours (Decimal)'],
-                    style: '1'
-                }
-            ];
+            let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><style>
+table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; }
+th { background: #4f8cff; color: white; font-weight: bold; padding: 10px; border: 1px solid #3a6fd6; text-align: left; }
+td { padding: 8px; border: 1px solid #ccc; }
+.total-row { background: #f0f6ff; font-weight: bold; }
+</style></head>
+<body>
+<h2>Tutoring Report — ${escapeHtml(monthName)}</h2>
+<table>
+<thead>
+<tr><th>Student</th><th>Sessions</th><th>Total Time</th><th>Total Hours (Decimal)</th></tr>
+</thead>
+<tbody>`;
 
             let grandTotalMinutes = 0;
             let grandTotalSessions = 0;
 
             rows.forEach(row => {
                 if (row.sessions > 0) {
-                    exportRows.push({
-                        cells: [row.name, row.sessions, row.totalTime, row.totalHours]
-                    });
-                    grandTotalMinutes += row.totalMinutes;
+                    html += `<tr><td>${escapeHtml(row.name)}</td><td>${row.sessions}</td><td>${row.totalTime}</td><td>${row.totalHours}</td></tr>`;
+                    grandTotalMinutes += parseFloat(row.totalHours) * 60;
                     grandTotalSessions += row.sessions;
                 }
             });
 
-            const grandTotalHours = Number((grandTotalMinutes / 60).toFixed(2));
+            const grandTotalHours = (grandTotalMinutes / 60).toFixed(2);
             const grandTotalTime = formatDuration(grandTotalMinutes);
 
-            exportRows.push({
-                cells: ['Grand Total', grandTotalSessions, grandTotalTime, grandTotalHours],
-                style: '2'
-            });
-            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
+            html += `</tbody>
+<tfoot>
+<tr class="total-row"><td>Grand Total</td><td>${grandTotalSessions}</td><td>${grandTotalTime}</td><td>${grandTotalHours}</td></tr>
+</tfoot>
+</table>
+<br><p style="color:#666; font-size:12px;">Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}</p>
+</body></html>`;
 
-            try {
-                downloadXlsx(
-                    `Tutoring-Report-${monthVal}.xlsx`,
-                    `Report ${monthName}`,
-                    exportRows,
-                    [28, 12, 18, 22]
-                );
-                showToast('Native Excel (.xlsx) report downloaded!');
-            } catch (err) {
-                console.error('Failed to export XLSX:', err);
-                showToast('Could not create the Excel workbook.', 'error');
-            }
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Tutoring-Report-${monthVal}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Excel report downloaded!');
         }
 
         // ===================== STUDENT EXCEL EXPORT =====================
-        function exportStudentExcel(monthVal) {
+        // opts: null for all sessions, or { sessions, titleSuffix, fileSuffix }
+        function exportStudentExcel(opts) {
             if (!data.selectedStudentId) {
                 showToast('Please select a student first.', 'error');
                 return;
@@ -2391,292 +1970,141 @@
             const student = data.students.find(s => s.id === data.selectedStudentId);
             if (!student) return;
 
-            let sessions = data.sessions
-                .filter(s => s.studentId === data.selectedStudentId)
-                .sort((a, b) =>
-                    new Date(a.date + 'T' + a.startTime) -
-                    new Date(b.date + 'T' + b.startTime)
-                );
-
-            let monthLabel = '';
+            let sessions;
+            let titleExtra = '';
             let fileSuffix = formatDateForInput(new Date());
 
-            if (monthVal) {
-                sessions = sessions.filter(s => s.date.slice(0, 7) === monthVal);
-                const [y, mo] = monthVal.split('-').map(Number);
-                monthLabel = new Date(y, mo - 1, 1)
-                    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                fileSuffix = monthVal;
+            if (opts) {
+                sessions = opts.sessions.slice().sort((a, b) => new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime));
+                titleExtra = ` (${opts.titleSuffix})`;
+                fileSuffix = opts.fileSuffix;
+            } else {
+                sessions = data.sessions
+                    .filter(s => s.studentId === data.selectedStudentId)
+                    .sort((a, b) => new Date(a.date + 'T' + a.startTime) - new Date(b.date + 'T' + b.startTime));
             }
 
             if (sessions.length === 0) {
-                showToast(
-                    monthVal
-                        ? `No sessions to export for ${monthLabel}.`
-                        : 'No sessions to export for this student.',
-                    'error'
-                );
+                showToast(opts ? 'No sessions in this selection to export.' : 'No sessions to export for this student.', 'error');
                 return;
             }
 
-            const exportRows = [
-                {
-                    cells: [
-                        monthLabel
-                            ? `${student.name} — Tutoring Sessions (${monthLabel})`
-                            : `${student.name} — Tutoring Sessions`
-                    ],
-                    style: '2'
-                },
-                { cells: [] },
-                { cells: ['Date', 'Start Time', 'End Time', 'Duration'], style: '1' }
-            ];
+            const heading = `${escapeHtml(student.name)} — Tutoring Sessions${titleExtra}`;
+
+            let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><style>
+table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; width: 100%; }
+th { background: #4f8cff; color: white; font-weight: bold; padding: 10px; border: 1px solid #3a6fd6; text-align: left; }
+td { padding: 8px; border: 1px solid #ccc; }
+.total-row { background: #f0f6ff; font-weight: bold; }.date-col { width: 120px; }
+.time-col { width: 100px; }
+.dur-col { width: 100px; }
+</style></head>
+<body>
+<h2>${heading}</h2>
+<table>
+<thead>
+<tr><th class="date-col">Date</th><th class="time-col">Start Time</th><th class="time-col">End Time</th><th class="dur-col">Duration</th></tr>
+</thead>
+<tbody>`;
 
             let totalMinutes = 0;
             sessions.forEach(session => {
-                exportRows.push({
-                    cells: [
-                        formatDateFriendly(session.date),
-                        formatTimeFriendly(session.startTime),
-                        formatTimeFriendly(session.endTime),
-                        formatDuration(session.durationMinutes)
-                    ]
-                });
+                html += `<tr><td>${escapeHtml(formatDateFriendly(session.date))}</td><td>${escapeHtml(formatTimeFriendly(session.startTime))}</td><td>${escapeHtml(formatTimeFriendly(session.endTime))}</td><td>${formatDuration(session.durationMinutes)}</td></tr>`;
                 totalMinutes += session.durationMinutes;
             });
 
-            exportRows.push({
-                cells: ['Total', '', '', formatDuration(totalMinutes)],
-                style: '2'
-            });
-            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
+            html += `</tbody>
+<tfoot>
+<tr class="total-row"><td colspan="3">Total</td><td>${formatDuration(totalMinutes)}</td></tr>
+</tfoot>
+</table>
+<br><p style="color:#666; font-size:12px;">Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}</p>
+</body></html>`;
 
-            const safeStudentName = student.name.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Student';
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${student.name.replace(/[^a-zA-Z0-9]/g, '_')}-Sessions-${fileSuffix}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
 
-            try {
-                downloadXlsx(
-                    `${safeStudentName}-Sessions-${fileSuffix}.xlsx`,
-                    monthLabel ? `${student.name} ${monthLabel}` : student.name,
-                    exportRows,
-                    [18, 16, 16, 16]
-                );
-                showToast('Native Excel (.xlsx) report downloaded!');
-            } catch (err) {
-                console.error('Failed to export XLSX:', err);
-                showToast('Could not create the Excel workbook.', 'error');
-            }
+            showToast('Excel report downloaded!');
         }
 
-        function exportStudentExcelMonthly() {
-            const monthVal = document.getElementById('historyMonthSelect').value;
+        function exportStudentExcelCycle() {
+            if (!data.selectedStudentId) {
+                showToast('Please select a student first.', 'error');
+                return;
+            }
+
+            const sel = document.getElementById('historyCycleSelect');
+            if (!sel.value || sel.value === 'all') {
+                showToast('Please choose a cycle from the sessions list first.', 'error');
+                return;
+            }
+
+            const studentSessions = data.sessions.filter(s => s.studentId === data.selectedStudentId);
+            const feesAsc = getStudentFees().map(f => f.date).sort();
+
+            let filtered, titleSuffix, fileSuffix;
+
+            if (sel.value === 'before') {
+                if (!feesAsc.length) {
+                    showToast('No fee cycles found.', 'error');
+                    return;
+                }
+                filtered = studentSessions.filter(s => s.date < feesAsc[0]);
+                titleSuffix = `Before ${formatDateFriendly(feesAsc[0])}`;
+                fileSuffix = `Before-${feesAsc[0]}`;
+            } else {
+                const i = parseInt(sel.value, 10);
+                if (isNaN(i) || i < 0 || i >= feesAsc.length) {
+                    showToast('Cycle not found.', 'error');
+                    return;
+                }
+                const start = feesAsc[i];
+                const next = feesAsc[i + 1] || null;
+                const end = next ? addDays(next, -1) : formatDateForInput(new Date());
+                filtered = studentSessions.filter(s => s.date >= start && (next ? s.date < next : true));
+                titleSuffix = `${formatDateFriendly(start)} – ${formatDateFriendly(end)}`;
+                fileSuffix = `${start}-to-${end}`;
+            }
+
+            if (filtered.length === 0) {
+                showToast('No sessions in this cycle to export.', 'error');
+                return;
+            }
+
+            exportStudentExcel({ sessions: filtered, titleSuffix, fileSuffix });
+        }
+
+        function exportStudentExcelMonth() {
+            if (!data.selectedStudentId) {
+                showToast('Please select a student first.', 'error');
+                return;
+            }
+
+            const sel = document.getElementById('historyMonthSelect');
+            const monthVal = sel.value;
             if (!monthVal || monthVal === 'all') {
                 showToast('Please choose a month from the sessions list first.', 'error');
                 return;
             }
-            exportStudentExcel(monthVal);
-        }
 
-        function exportStudentFeeCycleExcel(paymentId) {
-            if (!data.selectedStudentId) {
-                showToast('Please select a student first.', 'error');
+            const [y, mo] = monthVal.split('-').map(Number);
+            const monthLabel = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const filtered = data.sessions.filter(s => s.studentId === data.selectedStudentId && s.date.slice(0, 7) === monthVal);
+
+            if (filtered.length === 0) {
+                showToast(`No sessions to export for ${monthLabel}.`, 'error');
                 return;
             }
 
-            const student = data.students.find(s => s.id === data.selectedStudentId);
-            const cycle = getFeeCyclesForStudent(data.selectedStudentId).find(c => c.paymentId === paymentId);
-
-            if (!student || !cycle) {
-                showToast('Fee cycle not found.', 'error');
-                return;
-            }
-
-            if (cycle.sessions.length === 0) {
-                showToast('No sessions to export for this fee cycle.', 'error');
-                return;
-            }
-
-            const cycleEndLabel = cycle.endDate
-                ? formatDateFriendly(cycle.endDate)
-                : 'Until next fee is received';
-
-            const exportRows = [
-                { cells: [`${student.name} — Fee Cycle Report`], style: '2' },
-                { cells: [`Fee received: ${formatDateFriendly(cycle.startDate)}`] },
-                { cells: [`Cycle period: ${formatDateFriendly(cycle.startDate)} – ${cycleEndLabel}`] },
-                { cells: [`Next fee received: ${cycle.nextPaymentDate ? formatDateFriendly(cycle.nextPaymentDate) : 'Not yet recorded'}`] },
-                { cells: [] },
-                { cells: ['Date', 'Start Time', 'End Time', 'Duration'], style: '1' }
-            ];
-
-            cycle.sessions.forEach(session => {
-                exportRows.push({
-                    cells: [
-                        formatDateFriendly(session.date),
-                        formatTimeFriendly(session.startTime),
-                        formatTimeFriendly(session.endTime),
-                        formatDuration(session.durationMinutes)
-                    ]
-                });
-            });
-
-            exportRows.push({
-                cells: ['Total', cycle.sessions.length, '', formatDuration(cycle.totalMinutes)],
-                style: '2'
-            });
-            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
-
-            const safeStudentName =
-                student.name.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Student';
-
-            try {
-                downloadXlsx(
-                    `${safeStudentName}-Fee-Cycle-${cycle.startDate}-to-${cycle.endDate || 'current'}.xlsx`,
-                    `${student.name} Fee Cycle ${cycle.startDate}`,
-                    exportRows,
-                    [22, 18, 18, 18]
-                );
-                showToast('Fee-cycle Excel report downloaded!');
-            } catch (err) {
-                console.error('Failed to export fee-cycle XLSX:', err);
-                showToast('Could not create the fee-cycle workbook.', 'error');
-            }
-        }
-
-        function exportCurrentFeeCycleExcel() {
-            if (!data.selectedStudentId) {
-                showToast('Please select a student first.', 'error');
-                return;
-            }
-
-            const cycles = getFeeCyclesForStudent(data.selectedStudentId);
-            if (cycles.length === 0) {
-                showToast('Record a fee received date first.', 'error');
-                return;
-            }
-
-            exportStudentFeeCycleExcel(cycles[0].paymentId);
-        }
-
-        function exportAllFeeCyclesExcel() {
-            if (!data.selectedStudentId) {
-                showToast('Please select a student first.', 'error');
-                return;
-            }
-
-            const student = data.students.find(s => s.id === data.selectedStudentId);
-            const cycles = getFeeCyclesForStudent(data.selectedStudentId);
-
-            if (!student || cycles.length === 0) {
-                showToast('Record at least one fee received date first.', 'error');
-                return;
-            }
-
-            const exportRows = [
-                { cells: [`${student.name} — All Fee Cycle Reports`], style: '2' },
-                { cells: [`Fee cycles recorded: ${cycles.length}`] },
-                { cells: [] }
-            ];
-
-            let grandTotalMinutes = 0;
-            let grandTotalSessions = 0;
-
-            cycles.forEach((cycle, index) => {
-                const cycleEndLabel = cycle.endDate
-                    ? formatDateFriendly(cycle.endDate)
-                    : 'Until next fee is received';
-
-                exportRows.push({
-                    cells: [
-                        `Fee Cycle ${index + 1}`,
-                        `Fee received: ${formatDateFriendly(cycle.startDate)}`
-                    ],
-                    style: '2'
-                });
-                exportRows.push({
-                    cells: [
-                        `Cycle period: ${formatDateFriendly(cycle.startDate)} – ${cycleEndLabel}`,
-                        `Next fee: ${cycle.nextPaymentDate ? formatDateFriendly(cycle.nextPaymentDate) : 'Not yet recorded'}`
-                    ]
-                });
-                exportRows.push({
-                    cells: ['Date', 'Start Time', 'End Time', 'Duration'],
-                    style: '1'
-                });
-
-                cycle.sessions.forEach(session => {
-                    exportRows.push({
-                        cells: [
-                            formatDateFriendly(session.date),
-                            formatTimeFriendly(session.startTime),
-                            formatTimeFriendly(session.endTime),
-                            formatDuration(session.durationMinutes)
-                        ]
-                    });
-                });
-
-                exportRows.push({
-                    cells: ['Cycle Total', cycle.sessions.length, '', formatDuration(cycle.totalMinutes)],
-                    style: '2'
-                });
-                exportRows.push({ cells: [] });
-
-                grandTotalMinutes += cycle.totalMinutes;
-                grandTotalSessions += cycle.sessions.length;
-            });
-
-            const firstStartDate = cycles[cycles.length - 1].startDate;
-            const beforeFirstSessions = data.sessions
-                .filter(s =>
-                    s.studentId === data.selectedStudentId &&
-                    dateStringToDayNumber(s.date) < dateStringToDayNumber(firstStartDate)
-                )
-                .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
-
-            if (beforeFirstSessions.length > 0) {
-                exportRows.push({ cells: ['Sessions Before First Fee', '', '', ''], style: '2' });
-                exportRows.push({ cells: ['Date', 'Start Time', 'End Time', 'Duration'], style: '1' });
-
-                let beforeMinutes = 0;
-                beforeFirstSessions.forEach(session => {
-                    exportRows.push({
-                        cells: [
-                            formatDateFriendly(session.date),
-                            formatTimeFriendly(session.startTime),
-                            formatTimeFriendly(session.endTime),
-                            formatDuration(session.durationMinutes)
-                        ]
-                    });
-                    beforeMinutes += session.durationMinutes;
-                });
-
-                exportRows.push({
-                    cells: ['Before First Fee Total', beforeFirstSessions.length, '', formatDuration(beforeMinutes)],
-                    style: '2'
-                });
-                exportRows.push({ cells: [] });
-            }
-
-            exportRows.push({
-                cells: ['Grand Total', grandTotalSessions, '', formatDuration(grandTotalMinutes)],
-                style: '2'
-            });
-            exportRows.push({ cells: [`Exported from Tutoring Time Tracker on ${new Date().toLocaleDateString()}`] });
-
-            const safeStudentName =
-                student.name.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Student';
-
-            try {
-                downloadXlsx(
-                    `${safeStudentName}-All-Fee-Cycles.xlsx`,
-                    `${student.name} Fee Cycles`,
-                    exportRows,
-                    [34, 28, 18, 22]
-                );
-                showToast('All fee-cycle Excel reports downloaded!');
-            } catch (err) {
-                console.error('Failed to export all fee-cycle XLSX:', err);
-                showToast('Could not create the fee-cycle workbook.', 'error');
-            }
+            exportStudentExcel({ sessions: filtered, titleSuffix: monthLabel, fileSuffix: monthVal });
         }
 
         // ===================== JSON IMPORT / EXPORT =====================
@@ -2701,37 +2129,19 @@
             reader.onload = (event) => {
                 try {
                     const imported = JSON.parse(event.target.result);
-                    const validation = validateTrackerData(imported);
-                    if (!validation.valid) {
-                        throw new Error(validation.error);
+                    if (!imported.students || !imported.sessions) {
+                        throw new Error('Invalid file format');
                     }
-
                     openModal('Import Data', 'This will replace all current data. Are you sure?', () => {
-                        data = {
-                            students: imported.students.map(s => ({ id: s.id, name: s.name.trim() })),
-                            sessions: imported.sessions.map(s => ({
-                                id: s.id,
-                                studentId: s.studentId,
-                                date: s.date,
-                                startTime: s.startTime,
-                                endTime: s.endTime,
-                                durationMinutes: s.durationMinutes
-                            })),
-                            feePayments: (imported.feePayments || []).map(p => ({
-                                id: p.id,
-                                studentId: p.studentId,
-                                date: p.date
-                            })),
-                            selectedStudentId: imported.selectedStudentId || null
-                        };
-
-                        if (!data.students.some(s => s.id === data.selectedStudentId)) {
+                        data = imported;
+                        if (!Array.isArray(data.fees)) {
+                            data.fees = [];
+                        }
+                        if (!data.selectedStudentId || !data.students.find(s => s.id === data.selectedStudentId)) {
                             data.selectedStudentId = null;
                         }
-
+                        historyCycleFilter = 'all';
                         historyMonthFilter = 'all';
-                        editingSessionId = null;
-                        document.getElementById('saveBtn').textContent = '💾 Save Session';
                         saveData();
                         renderStudents();
                         populateStudentSelect();
@@ -2751,126 +2161,6 @@
         function parseTime(timeStr) {
             const [h, m] = timeStr.split(':').map(Number);
             return { hours: h, minutes: m };
-        }
-
-        function isValidDateString(value) {
-            if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-            const [year, month, day] = value.split('-').map(Number);
-            const date = new Date(year, month - 1, day);
-            return date.getFullYear() === year &&
-                   date.getMonth() === month - 1 &&
-                   date.getDate() === day;
-        }
-
-        function isValidTimeString(value) {
-            if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) return false;
-            const [hours, minutes] = value.split(':').map(Number);
-            return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
-        }
-
-        function validateTrackerData(candidate) {
-            if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
-                return { valid: false, error: 'Backup must contain an object.' };
-            }
-            if (!Array.isArray(candidate.students) || !Array.isArray(candidate.sessions)) {
-                return { valid: false, error: 'Students and sessions must be arrays.' };
-            }
-            if (candidate.students.length > MAX_STUDENTS) {
-                return { valid: false, error: 'Backup contains more than 10 students.' };
-            }
-
-            const feePayments = candidate.feePayments === undefined ? [] : candidate.feePayments;
-            if (!Array.isArray(feePayments)) {
-                return { valid: false, error: 'Fee payments must be an array.' };
-            }
-
-            const studentIds = new Set();
-            const studentNames = new Set();
-            for (const student of candidate.students) {
-                if (!student || typeof student !== 'object' ||
-                    typeof student.id !== 'string' || !student.id.trim() ||
-                    typeof student.name !== 'string' || !student.name.trim()) {
-                    return { valid: false, error: 'Backup contains an invalid student.' };
-                }
-                const normalizedName = student.name.trim().toLowerCase();
-                if (studentIds.has(student.id)) {
-                    return { valid: false, error: 'Backup contains duplicate student IDs.' };
-                }
-                if (studentNames.has(normalizedName)) {
-                    return { valid: false, error: 'Backup contains duplicate student names.' };
-                }
-                studentIds.add(student.id);
-                studentNames.add(normalizedName);
-            }
-
-            const sessionIds = new Set();
-            for (const session of candidate.sessions) {
-                if (!session || typeof session !== 'object' ||
-                    typeof session.id !== 'string' || !session.id.trim() ||
-                    typeof session.studentId !== 'string' ||
-                    !studentIds.has(session.studentId) ||
-                    !isValidDateString(session.date) ||
-                    !isValidTimeString(session.startTime) ||
-                    !isValidTimeString(session.endTime) ||
-                    !Number.isInteger(session.durationMinutes) ||
-                    session.durationMinutes <= 0 ||
-                    session.durationMinutes > MAX_SESSION_MINUTES) {
-                    return { valid: false, error: 'Backup contains an invalid session.' };
-                }
-
-                if (sessionIds.has(session.id)) {
-                    return { valid: false, error: 'Backup contains duplicate session IDs.' };
-                }
-
-                const start = parseTime(session.startTime);
-                const end = parseTime(session.endTime);
-                const startTotal = start.hours * 60 + start.minutes;
-                const endTotal = end.hours * 60 + end.minutes;
-                if (endTotal <= startTotal || endTotal - startTotal !== session.durationMinutes) {
-                    return { valid: false, error: 'Backup contains an inconsistent session duration.' };
-                }
-
-                sessionIds.add(session.id);
-            }
-
-            const feePaymentIds = new Set();
-            for (const payment of feePayments) {
-                if (!payment || typeof payment !== 'object' ||
-                    typeof payment.id !== 'string' || !payment.id.trim() ||
-                    typeof payment.studentId !== 'string' || !studentIds.has(payment.studentId) ||
-                    !isValidDateString(payment.date)) {
-                    return { valid: false, error: 'Backup contains an invalid fee payment.' };
-                }
-
-                if (feePaymentIds.has(payment.id)) {
-                    return { valid: false, error: 'Backup contains duplicate fee payment IDs.' };
-                }
-                feePaymentIds.add(payment.id);
-            }
-
-            for (let i = 0; i < feePayments.length; i++) {
-                for (let j = i + 1; j < feePayments.length; j++) {
-                    if (feePayments[i].studentId === feePayments[j].studentId &&
-                        feePayments[i].date === feePayments[j].date) {
-                        return { valid: false, error: 'Backup contains duplicate fee payment dates for a student.' };
-                    }
-                }
-            }
-
-            if (candidate.selectedStudentId !== null &&
-                candidate.selectedStudentId !== undefined &&
-                (typeof candidate.selectedStudentId !== 'string' || !studentIds.has(candidate.selectedStudentId))) {
-                return { valid: false, error: 'Backup contains an invalid selected student.' };
-            }
-
-            return { valid: true };
-        }
-
-        function makeId(prefix) {
-            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-                return prefix + crypto.randomUUID();
-            }
-            return prefix + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
         }
 
         function formatDuration(minutes) {
@@ -2899,6 +2189,17 @@
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
+        function formatDateShort(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+
+        function addDays(dateStr, delta) {
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setDate(d.getDate() + delta);
+            return formatDateForInput(d);
+        }
+
         function formatTimeFriendly(timeStr) {
             const [h, m] = timeStr.split(':').map(Number);
             const date = new Date();
@@ -2917,39 +2218,22 @@
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show ' + type;
-
-            if (toastTimer) clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
+            setTimeout(() => {
                 toast.classList.remove('show');
-                toastTimer = null;
             }, 3000);
         }
 
         function openModal(title, message, onConfirm) {
-            modalPreviousFocus = document.activeElement;
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').textContent = message;
             modalCallback = onConfirm;
-
-            const overlay = document.getElementById('modalOverlay');
-            overlay.classList.add('open');
-            document.getElementById('modalCancel').focus();
+            document.getElementById('modalOverlay').classList.add('open');
         }
 
         function closeModal() {
             document.getElementById('modalOverlay').classList.remove('open');
             modalCallback = null;
-            if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') {
-                modalPreviousFocus.focus();
-            }
-            modalPreviousFocus = null;
         }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.getElementById('modalOverlay').classList.contains('open')) {
-                closeModal();
-            }
-        });
 
         // ===================== START =====================
         init();
