@@ -1053,9 +1053,19 @@
         // ===================== SERVICE WORKER =====================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then((reg) => console.log('SW registered:', reg.scope))
+                navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+                    .then((reg) => {
+                        console.log('SW registered:', reg.scope);
+                        reg.update().catch(() => {});
+                    })
                     .catch((err) => console.log('SW registration failed:', err));
+
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (sessionStorage.getItem('tutorTracker_swReloaded') !== '1') {
+                        sessionStorage.setItem('tutorTracker_swReloaded', '1');
+                        window.location.reload();
+                    }
+                });
             });
         }
 
